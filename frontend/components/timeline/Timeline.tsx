@@ -5,10 +5,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { AIEvent, ViewMode, DrillState } from "@/lib/types";
 import { format, parseISO, getDaysInMonth } from "date-fns";
 
-/* ------------------------------------------------------------------ */
-/*  Types & helpers                                                    */
-/* ------------------------------------------------------------------ */
-
 interface TimelineProps {
   events: AIEvent[];
   drill: DrillState;
@@ -32,158 +28,162 @@ interface RenderNode {
   eventCount: number;
 }
 
-/* ------------------------------------------------------------------ */
-/*  TimelineCanvas – enhanced cosmic background                       */
-/* ------------------------------------------------------------------ */
+const monthNames = [
+  "1月", "2月", "3月", "4月", "5月", "6月",
+  "7月", "8月", "9月", "10月", "11月", "12月",
+];
+
+const levelMeta = {
+  year: {
+    title: "纪年星图",
+    subtitle: "点击年份进入月度透镜，观察 AI 事件如何在不同周期聚集。",
+    code: "YEAR ATLAS",
+  },
+  month: {
+    title: "月度透镜",
+    subtitle: "点击有事件的月份，进入日级轨迹并查看具体事件。",
+    code: "MONTH LENS",
+  },
+  day: {
+    title: "日级轨迹",
+    subtitle: "点击发光节点打开事件档案，阅读 Markdown 详情与来源。",
+    code: "DAY TRACE",
+  },
+};
 
 function TimelineCanvas({
   scrollX,
   drill,
+  nodes,
   winW,
   winH,
 }: {
   scrollX: number;
   drill: DrillState;
+  nodes: RenderNode[];
   winW: number;
   winH: number;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
-    const c = canvasRef.current;
-    if (!c) return;
-    const ctx = c.getContext("2d");
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const dpr = devicePixelRatio;
-    c.width = c.offsetWidth * dpr;
-    c.height = c.offsetHeight * dpr;
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = Math.floor(canvas.offsetWidth * dpr);
+    canvas.height = Math.floor(canvas.offsetHeight * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    const dw = c.offsetWidth;
-    const dh = c.offsetHeight;
-    const midY = dh / 2;
+    const width = canvas.offsetWidth;
+    const height = canvas.offsetHeight;
+    const midY = height / 2;
+    const time = Date.now();
 
-    ctx.clearRect(0, 0, dw, dh);
+    ctx.clearRect(0, 0, width, height);
 
-    /* cosmic river — multi-layer glow */
-    const glowLayers = [
-      { y: midY, h: 80, a1: 0, a2: 0.06, a3: 0.12 },
-      { y: midY, h: 40, a1: 0, a2: 0.08, a3: 0.18 },
-      { y: midY, h: 4, a1: 0.15, a2: 0.35, a3: 0.15 },
-    ];
+    const horizon = ctx.createLinearGradient(0, midY - 210, 0, midY + 210);
+    horizon.addColorStop(0, "rgba(91,141,239,0)");
+    horizon.addColorStop(0.36, "rgba(91,141,239,0.08)");
+    horizon.addColorStop(0.5, "rgba(240,192,96,0.18)");
+    horizon.addColorStop(0.64, "rgba(139,92,246,0.09)");
+    horizon.addColorStop(1, "rgba(91,141,239,0)");
+    ctx.fillStyle = horizon;
+    ctx.fillRect(0, midY - 210, width, 420);
 
-    for (const layer of glowLayers) {
-      const g = ctx.createLinearGradient(0, layer.y - layer.h / 2, 0, layer.y + layer.h / 2);
-      g.addColorStop(0, `rgba(212,168,83,${layer.a1})`);
-      g.addColorStop(0.4, `rgba(212,168,83,${layer.a2})`);
-      g.addColorStop(0.5, `rgba(240,192,96,${layer.a3})`);
-      g.addColorStop(0.6, `rgba(212,168,83,${layer.a2})`);
-      g.addColorStop(1, `rgba(212,168,83,${layer.a1})`);
-      ctx.fillStyle = g;
-      ctx.fillRect(0, layer.y - layer.h / 2, dw, layer.h);
+    ctx.save();
+    ctx.globalCompositeOperation = "screen";
+    for (let layer = 0; layer < 5; layer++) {
+      ctx.beginPath();
+      const amp = 10 + layer * 13;
+      const phase = scrollX * 0.005 + layer * 1.4 + time * 0.00045;
+      ctx.moveTo(-60, midY + Math.sin(phase) * amp);
+      for (let x = -60; x <= width + 80; x += 40) {
+        const y = midY + Math.sin(x * 0.012 + phase) * amp + Math.cos(x * 0.006 + phase * 0.7) * amp * 0.5;
+        ctx.lineTo(x, y);
+      }
+      ctx.strokeStyle = layer % 2 === 0
+        ? `rgba(240,192,96,${0.09 - layer * 0.01})`
+        : `rgba(91,141,239,${0.08 - layer * 0.008})`;
+      ctx.lineWidth = 34 - layer * 5;
+      ctx.shadowBlur = 24;
+      ctx.shadowColor = layer % 2 === 0 ? "rgba(240,192,96,0.24)" : "rgba(91,141,239,0.22)";
+      ctx.stroke();
     }
+    ctx.restore();
 
-    /* central line */
-    ctx.strokeStyle = "rgba(212,168,83,0.35)";
-    ctx.lineWidth = 1.5;
-    ctx.shadowColor = "rgba(240,192,96,0.3)";
-    ctx.shadowBlur = 12;
+    ctx.save();
+    ctx.strokeStyle = "rgba(240,192,96,0.48)";
+    ctx.lineWidth = 1.2;
+    ctx.shadowBlur = 18;
+    ctx.shadowColor = "rgba(240,192,96,0.36)";
     ctx.beginPath();
     ctx.moveTo(0, midY);
-    ctx.lineTo(dw, midY);
+    ctx.lineTo(width, midY);
     ctx.stroke();
-    ctx.shadowBlur = 0;
+    ctx.restore();
 
-    /* tick marks based on current drill level */
-    if (drill.level === "year") {
-      for (let y = 2012; y <= 2026; y++) {
-        const x = (y - 2012) * 160 + 120 - scrollX;
-        if (x < -50 || x > dw + 50) continue;
-        ctx.strokeStyle = "rgba(255,255,255,0.06)";
-        ctx.lineWidth = 1;
+    const tickAlpha = drill.level === "year" ? 0.09 : drill.level === "month" ? 0.07 : 0.045;
+    for (const node of nodes) {
+      const x = node.x - scrollX;
+      if (x < -80 || x > width + 80) continue;
+      const major = node.eventCount > 0;
+
+      ctx.strokeStyle = major ? `rgba(240,192,96,${tickAlpha + 0.08})` : `rgba(255,255,255,${tickAlpha})`;
+      ctx.lineWidth = major ? 1 : 0.6;
+      ctx.beginPath();
+      ctx.moveTo(x, midY - (major ? 52 : 24));
+      ctx.lineTo(x, midY + (major ? 52 : 24));
+      ctx.stroke();
+
+      if (major) {
+        const radius = drill.level === "year" ? 54 : drill.level === "month" ? 42 : 28;
+        const gradient = ctx.createRadialGradient(x, midY, 0, x, midY, radius);
+        gradient.addColorStop(0, "rgba(240,192,96,0.12)");
+        gradient.addColorStop(0.48, "rgba(91,141,239,0.055)");
+        gradient.addColorStop(1, "rgba(255,255,255,0)");
+        ctx.fillStyle = gradient;
         ctx.beginPath();
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x, dh);
-        ctx.stroke();
-        ctx.fillStyle = "rgba(200,200,220,0.4)";
-        ctx.font = "11px 'JetBrains Mono', monospace";
-        ctx.textAlign = "center";
-        ctx.fillText(String(y), x, midY - 70);
-      }
-    } else if (drill.level === "month" && drill.year !== null) {
-      const spacing = winW / 14;
-      for (let m = 0; m < 12; m++) {
-        const x = m * spacing + spacing * 1.2 - scrollX;
-        if (x < -30 || x > dw + 30) continue;
-        ctx.strokeStyle = "rgba(255,255,255,0.04)";
-        ctx.lineWidth = 0.5;
-        ctx.beginPath();
-        ctx.moveTo(x, midY - 30);
-        ctx.lineTo(x, midY + 30);
-        ctx.stroke();
-      }
-    } else if (drill.level === "day" && drill.year !== null && drill.month !== null) {
-      const daysInMonth = getDaysInMonth(new Date(drill.year, drill.month, 1));
-      const spacing = winW / (daysInMonth + 4);
-      for (let d = 1; d <= daysInMonth; d++) {
-        const x = d * spacing + spacing * 1.5 - scrollX;
-        if (x < -20 || x > dw + 20) continue;
-        ctx.fillStyle = "rgba(255,255,255,0.04)";
-        ctx.fillRect(x - 0.5, midY - 15, 1, 30);
+        ctx.arc(x, midY, radius, 0, Math.PI * 2);
+        ctx.fill();
       }
     }
 
-    /* decorative particles along the line */
-    const dotSpacing = 30;
+    const dotSpacing = drill.level === "day" ? 18 : 28;
     const startX = -(scrollX % dotSpacing);
-    for (let x = startX; x < dw; x += dotSpacing) {
-      const phase = (x + scrollX) * 0.03;
-      const alpha = 0.04 + 0.06 * Math.abs(Math.sin(phase));
+    for (let x = startX; x < width; x += dotSpacing) {
+      const pulse = 0.38 + 0.62 * Math.abs(Math.sin((x + scrollX) * 0.035 + time * 0.0012));
       ctx.beginPath();
-      ctx.arc(x, midY, 1.2, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(212,168,83,${alpha})`;
+      ctx.arc(x, midY, 0.9 + pulse * 0.9, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(240,192,96,${0.045 + pulse * 0.06})`;
       ctx.fill();
     }
 
-    /* present-day marker (2026) */
     if (drill.level === "year") {
-      const nowX = (2026 - 2012) * 160 + 120 - scrollX;
-      if (nowX > 0 && nowX < dw) {
-        ctx.strokeStyle = "rgba(240,192,96,0.25)";
-        ctx.lineWidth = 1;
-        ctx.setLineDash([4, 8]);
+      const markerX = (2026 - 2012) * 172 + Math.max(170, winW * 0.17) - scrollX;
+      if (markerX > 0 && markerX < width) {
+        const pulse = 0.5 + 0.5 * Math.sin(time * 0.004);
+        ctx.save();
+        ctx.setLineDash([3, 9]);
+        ctx.strokeStyle = `rgba(240,192,96,${0.18 + pulse * 0.12})`;
         ctx.beginPath();
-        ctx.moveTo(nowX, midY - 50);
-        ctx.lineTo(nowX, midY + 50);
+        ctx.moveTo(markerX, midY - 96);
+        ctx.lineTo(markerX, midY + 96);
         ctx.stroke();
-        ctx.setLineDash([]);
+        ctx.restore();
 
-        /* pulsing dot */
-        const pulse = 0.5 + 0.5 * Math.sin(Date.now() * 0.003);
+        ctx.fillStyle = `rgba(240,192,96,${0.16 + pulse * 0.22})`;
         ctx.beginPath();
-        ctx.arc(nowX, midY, 4, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(240,192,96,${0.3 + pulse * 0.4})`;
-        ctx.fill();
-        ctx.beginPath();
-        ctx.arc(nowX, midY, 8, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(240,192,96,${0.05 + pulse * 0.1})`;
+        ctx.arc(markerX, midY, 9 + pulse * 7, 0, Math.PI * 2);
         ctx.fill();
       }
     }
-  }, [scrollX, drill, winW, winH]);
+  }, [scrollX, drill, nodes, winW, winH]);
 
-  return (
-    <canvas
-      ref={canvasRef}
-      className="absolute inset-0 w-full h-full pointer-events-none"
-    />
-  );
+  return <canvas ref={canvasRef} className="absolute inset-0 h-full w-full pointer-events-none" />;
 }
-
-/* ------------------------------------------------------------------ */
-/*  Grid / List views (unchanged logic)                                */
-/* ------------------------------------------------------------------ */
 
 function GridView({
   events,
@@ -191,51 +191,57 @@ function GridView({
   highlightedId,
 }: {
   events: AIEvent[];
-  onNodeClick: (e: AIEvent) => void;
+  onNodeClick: (event: AIEvent) => void;
   highlightedId: string | null;
 }) {
   return (
-    <div className="absolute inset-0 top-20 overflow-y-auto px-8 pb-20">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 max-w-7xl mx-auto">
-        {events.map((event, i) => (
+    <div className="absolute inset-x-0 bottom-0 top-24 z-20 overflow-y-auto px-5 pb-28 xl:left-[410px] 2xl:right-[335px]">
+      <div className="mx-auto grid max-w-6xl grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+        {events.map((event, index) => (
           <motion.button
             key={event.id}
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 26, scale: 0.98 }}
             animate={{
               opacity: 1,
               y: 0,
-              boxShadow:
-                highlightedId === event.id
-                  ? "0 0 30px rgba(212,168,83,0.5)"
-                  : "0 4px 24px rgba(0,0,0,0.4)",
+              scale: 1,
+              boxShadow: highlightedId === event.id
+                ? "0 0 0 1px rgba(240,192,96,0.5), 0 22px 70px rgba(212,168,83,0.16)"
+                : "0 22px 70px rgba(0,0,0,0.32)",
             }}
-            transition={{ delay: i * 0.03, duration: 0.35 }}
+            transition={{ delay: index * 0.025, duration: 0.42, ease: "easeOut" }}
             onClick={() => onNodeClick(event)}
-            className="glass-card p-5 text-left hover:border-cosmos-gold/20 transition-all duration-300 group"
+            className="group chronos-panel min-h-[190px] p-5 text-left transition-transform duration-300 hover:-translate-y-1"
           >
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-[10px] text-cosmos-text-dim font-mono">
-                {format(parseISO(event.event_date), "yyyy.MM.dd")}
-              </span>
-              <span
-                className={`w-2 h-2 rounded-full ${
-                  event.impact_score >= 95
-                    ? "bg-cosmos-gold shadow-[0_0_6px_rgba(212,168,83,0.6)]"
-                    : event.impact_score >= 85
-                    ? "bg-cosmos-blue"
-                    : "bg-cosmos-purple"
-                }`}
-              />
-            </div>
-            <h3 className="text-sm font-medium text-cosmos-text leading-snug mb-2 group-hover:text-cosmos-gold transition-colors">
-              {event.title}
-            </h3>
-            <div className="flex flex-wrap gap-1">
-              {event.tags.slice(0, 2).map((tag) => (
-                <span key={tag} className="text-[9px] px-1.5 py-0.5 rounded bg-cosmos-surface text-cosmos-text-dim">
-                  {tag}
+            <div className="relative z-10 flex h-full flex-col">
+              <div className="flex items-center justify-between gap-3">
+                <span className="font-mono text-[10px] tracking-[0.2em] text-cosmos-text-dim">
+                  {format(parseISO(event.event_date), "yyyy.MM.dd")}
                 </span>
-              ))}
+                <span className="rounded-full border border-cosmos-gold/20 bg-cosmos-gold/10 px-2 py-0.5 font-mono text-[10px] text-cosmos-gold">
+                  {event.impact_score}
+                </span>
+              </div>
+              <h3 className="mt-5 font-display text-xl leading-tight text-cosmos-text transition-colors group-hover:text-cosmos-gold">
+                {event.title}
+              </h3>
+              <div className="mt-auto pt-5">
+                <div className="mb-3 h-1 overflow-hidden rounded-full bg-white/[0.07]">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${event.impact_score}%` }}
+                    transition={{ duration: 0.8, delay: index * 0.02 }}
+                    className="h-full rounded-full bg-gradient-to-r from-cosmos-blue via-cosmos-gold to-cosmos-accent"
+                  />
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {event.tags.slice(0, 3).map((tag) => (
+                    <span key={tag} className="rounded-full border border-white/10 bg-white/[0.04] px-2 py-0.5 text-[10px] text-cosmos-text-dim">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
             </div>
           </motion.button>
         ))}
@@ -250,70 +256,50 @@ function ListView({
   highlightedId,
 }: {
   events: AIEvent[];
-  onNodeClick: (e: AIEvent) => void;
+  onNodeClick: (event: AIEvent) => void;
   highlightedId: string | null;
 }) {
   return (
-    <div className="absolute inset-0 top-20 overflow-y-auto px-8 pb-20">
-      <div className="max-w-3xl mx-auto space-y-2">
-        {events.map((event, i) => (
+    <div className="absolute inset-x-0 bottom-0 top-24 z-20 overflow-y-auto px-5 pb-28 xl:left-[430px] 2xl:right-[355px]">
+      <div className="mx-auto max-w-4xl space-y-3">
+        {events.map((event, index) => (
           <motion.button
             key={event.id}
-            initial={{ opacity: 0, x: -20 }}
-            animate={{
-              opacity: 1,
-              x: 0,
-              boxShadow:
-                highlightedId === event.id
-                  ? "inset 0 0 0 1px rgba(212,168,83,0.5)"
-                  : "none",
-            }}
-            transition={{ delay: i * 0.02, duration: 0.3 }}
+            initial={{ opacity: 0, x: -24 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: index * 0.018, duration: 0.36 }}
             onClick={() => onNodeClick(event)}
-            className="w-full glass-card-light p-4 flex items-center gap-4 text-left hover:bg-cosmos-card/60 transition-all group"
+            className={`group grid w-full grid-cols-[88px_1fr_auto] items-center gap-5 rounded-2xl border px-5 py-4 text-left backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 hover:border-cosmos-gold/25 ${
+              highlightedId === event.id
+                ? "border-cosmos-gold/45 bg-cosmos-gold/10 shadow-[0_0_34px_rgba(212,168,83,0.18)]"
+                : "border-white/[0.07] bg-white/[0.035]"
+            }`}
           >
-            <div className="flex-shrink-0 w-16 text-right">
-              <span className="text-xs text-cosmos-text-dim font-mono">
-                {format(parseISO(event.event_date), "yyyy")}
-              </span>
-              <span className="block text-[10px] text-cosmos-text-dim font-mono">
-                {format(parseISO(event.event_date), "MM.dd")}
-              </span>
+            <div className="font-mono text-right">
+              <span className="block text-sm text-cosmos-gold">{format(parseISO(event.event_date), "yyyy")}</span>
+              <span className="text-[10px] tracking-[0.16em] text-cosmos-text-dim">{format(parseISO(event.event_date), "MM.DD")}</span>
             </div>
-            <div
-              className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
-                event.impact_score >= 95
-                  ? "bg-cosmos-gold shadow-[0_0_8px_rgba(212,168,83,0.5)]"
-                  : "bg-cosmos-blue-dim"
-              }`}
-            />
-            <div className="flex-1 min-w-0">
-              <h3 className="text-sm text-cosmos-text truncate group-hover:text-cosmos-gold transition-colors">
+            <div className="min-w-0">
+              <h3 className="truncate text-sm text-cosmos-text transition-colors group-hover:text-cosmos-gold">
                 {event.title}
               </h3>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {event.tags.slice(0, 3).map((tag) => (
+                  <span key={tag} className="rounded-full bg-white/[0.05] px-2 py-0.5 text-[9px] text-cosmos-text-dim">
+                    {tag}
+                  </span>
+                ))}
+              </div>
             </div>
-            <div className="flex gap-1 flex-shrink-0">
-              {event.tags.slice(0, 2).map((tag) => (
-                <span key={tag} className="text-[9px] px-1.5 py-0.5 rounded bg-cosmos-surface text-cosmos-text-dim">
-                  {tag}
-                </span>
-              ))}
-            </div>
+            <span className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 font-mono text-[10px] text-cosmos-text-dim">
+              {event.impact_score}
+            </span>
           </motion.button>
         ))}
       </div>
     </div>
   );
 }
-
-/* ------------------------------------------------------------------ */
-/*  Main Timeline                                                      */
-/* ------------------------------------------------------------------ */
-
-const monthNames = [
-  "1月", "2月", "3月", "4月", "5月", "6月",
-  "7月", "8月", "9月", "10月", "11月", "12月",
-];
 
 export function Timeline({
   events,
@@ -323,19 +309,16 @@ export function Timeline({
   onDrillDown,
   highlightedId,
 }: TimelineProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
   const [scrollX, setScrollX] = useState(0);
   const [hoveredNode, setHoveredNode] = useState<RenderNode | null>(null);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
+  const [winW, setWinW] = useState(1200);
+  const [winH, setWinH] = useState(800);
   const isDragging = useRef(false);
   const lastX = useRef(0);
   const animRef = useRef<number | null>(null);
   const targetScrollX = useRef(0);
   const currentScrollX = useRef(0);
-  const [winW, setWinW] = useState(1200);
-  const [winH, setWinH] = useState(800);
-  const [transitioning, setTransitioning] = useState(false);
-  const prevDrillKey = useRef("");
 
   useEffect(() => {
     setWinW(window.innerWidth);
@@ -348,19 +331,97 @@ export function Timeline({
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  /* animate drill-level transitions */
-  useEffect(() => {
-    const key = `${drill.level}-${drill.year}-${drill.month}`;
-    if (key !== prevDrillKey.current && prevDrillKey.current !== "") {
-      setTransitioning(true);
-      const t = setTimeout(() => setTransitioning(false), 500);
-      prevDrillKey.current = key;
-      return () => clearTimeout(t);
-    }
-    prevDrillKey.current = key;
-  }, [drill]);
+  const nodes = useMemo<RenderNode[]>(() => {
+    const leftPad = Math.max(170, winW * 0.17);
 
-  /* RAF scroll animation */
+    if (drill.level === "year") {
+      const map = new Map<number, AIEvent[]>();
+      for (const event of events) {
+        const year = parseISO(event.event_date).getFullYear();
+        map.set(year, [...(map.get(year) ?? []), event]);
+      }
+      return Array.from(map.entries())
+        .sort(([a], [b]) => a - b)
+        .map(([year, evts], index) => ({
+          key: `y-${year}`,
+          x: (year - 2012) * 172 + leftPad,
+          y: index % 2 === 0 ? -108 : 100,
+          label: String(year),
+          subLabel: `${evts.length} 个事件`,
+          isDrillable: true,
+          year,
+          events: evts.sort((a, b) => b.impact_score - a.impact_score),
+          maxImpact: Math.max(...evts.map((event) => event.impact_score)),
+          eventCount: evts.length,
+        }));
+    }
+
+    if (drill.level === "month" && drill.year !== null) {
+      const map = new Map<number, AIEvent[]>();
+      for (const event of events) {
+        const date = parseISO(event.event_date);
+        if (date.getFullYear() !== drill.year) continue;
+        const month = date.getMonth();
+        map.set(month, [...(map.get(month) ?? []), event]);
+      }
+      const spacing = Math.max(106, winW / 11.5);
+      return Array.from({ length: 12 }, (_, month) => {
+        const evts = (map.get(month) ?? []).sort((a, b) => b.impact_score - a.impact_score);
+        return {
+          key: `m-${drill.year}-${month}`,
+          x: month * spacing + Math.max(130, winW * 0.1),
+          y: month % 2 === 0 ? -92 : 92,
+          label: monthNames[month],
+          subLabel: evts.length > 0 ? `${evts.length} 个事件` : "静默区间",
+          isDrillable: evts.length > 0,
+          year: drill.year!,
+          month,
+          events: evts,
+          maxImpact: evts.length > 0 ? Math.max(...evts.map((event) => event.impact_score)) : 0,
+          eventCount: evts.length,
+        };
+      });
+    }
+
+    if (drill.level === "day" && drill.year !== null && drill.month !== null) {
+      const daysInMonth = getDaysInMonth(new Date(drill.year, drill.month, 1));
+      const map = new Map<number, AIEvent[]>();
+      for (const event of events) {
+        const date = parseISO(event.event_date);
+        if (date.getFullYear() !== drill.year || date.getMonth() !== drill.month) continue;
+        const day = date.getDate();
+        map.set(day, [...(map.get(day) ?? []), event]);
+      }
+      const spacing = Math.max(58, winW / Math.min(daysInMonth + 3, 19));
+      return Array.from({ length: daysInMonth }, (_, index) => {
+        const day = index + 1;
+        const evts = (map.get(day) ?? []).sort((a, b) => b.impact_score - a.impact_score);
+        return {
+          key: `d-${drill.year}-${drill.month}-${day}`,
+          x: day * spacing + Math.max(70, winW * 0.06),
+          y: day % 2 === 0 ? -72 : 72,
+          label: `${day}`,
+          subLabel: evts.length > 0 ? evts[0].title : undefined,
+          isDrillable: false,
+          year: drill.year!,
+          month: drill.month!,
+          events: evts,
+          maxImpact: evts.length > 0 ? Math.max(...evts.map((event) => event.impact_score)) : 0,
+          eventCount: evts.length,
+        };
+      });
+    }
+
+    return [];
+  }, [events, drill, winW]);
+
+  const totalWidth = useMemo(() => {
+    if (nodes.length === 0) return winW;
+    return Math.max(winW, Math.max(...nodes.map((node) => node.x)) + Math.max(260, winW * 0.16));
+  }, [nodes, winW]);
+
+  const maxScroll = Math.max(0, totalWidth - winW);
+
   const startAnim = useCallback(() => {
     if (animRef.current) return;
     const animate = () => {
@@ -371,7 +432,7 @@ export function Timeline({
         animRef.current = null;
         return;
       }
-      currentScrollX.current += diff * 0.08;
+      currentScrollX.current += diff * 0.09;
       setScrollX(currentScrollX.current);
       animRef.current = requestAnimationFrame(animate);
     };
@@ -379,349 +440,230 @@ export function Timeline({
   }, []);
 
   useEffect(() => {
-    startAnim();
     return () => {
       if (animRef.current) cancelAnimationFrame(animRef.current);
       animRef.current = null;
     };
-  }, [startAnim]);
+  }, []);
 
-  /* reset scroll on drill change */
   useEffect(() => {
     targetScrollX.current = 0;
     currentScrollX.current = 0;
     setScrollX(0);
   }, [drill.level, drill.year, drill.month]);
 
-  /* input handlers */
-  const handleWheel = useCallback(
-    (e: React.WheelEvent) => {
-      const maxScroll = Math.max(0, (drill.level === "year" ? 2500 : drill.level === "month" ? winW * 0.7 : winW * 0.8) - winW);
-      targetScrollX.current += e.deltaY;
-      targetScrollX.current = Math.max(0, Math.min(targetScrollX.current, maxScroll));
-      startAnim();
-    },
-    [drill.level, winW, startAnim]
-  );
+  useEffect(() => {
+    targetScrollX.current = Math.max(0, Math.min(targetScrollX.current, maxScroll));
+    currentScrollX.current = Math.max(0, Math.min(currentScrollX.current, maxScroll));
+    setScrollX((value) => Math.max(0, Math.min(value, maxScroll)));
+  }, [maxScroll]);
 
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+  const moveTarget = useCallback((delta: number) => {
+    targetScrollX.current = Math.max(0, Math.min(targetScrollX.current + delta, maxScroll));
+    startAnim();
+  }, [maxScroll, startAnim]);
+
+  const handleWheel = useCallback((event: React.WheelEvent) => {
+    moveTarget(Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY);
+  }, [moveTarget]);
+
+  const handleMouseDown = useCallback((event: React.MouseEvent) => {
     isDragging.current = true;
-    lastX.current = e.clientX;
+    lastX.current = event.clientX;
   }, []);
-  const handleMouseMove = useCallback(
-    (e: React.MouseEvent) => {
-      if (!isDragging.current) return;
-      const dx = lastX.current - e.clientX;
-      const maxScroll = Math.max(0, (drill.level === "year" ? 2500 : drill.level === "month" ? winW * 0.7 : winW * 0.8) - winW);
-      targetScrollX.current += dx;
-      targetScrollX.current = Math.max(0, Math.min(targetScrollX.current, maxScroll));
-      lastX.current = e.clientX;
-      startAnim();
-    },
-    [drill.level, winW, startAnim]
-  );
+
+  const handleMouseMove = useCallback((event: React.MouseEvent) => {
+    if (!isDragging.current) return;
+    const delta = lastX.current - event.clientX;
+    lastX.current = event.clientX;
+    moveTarget(delta);
+  }, [moveTarget]);
+
   const handleMouseUp = useCallback(() => {
     isDragging.current = false;
   }, []);
 
-  /* ---- build render nodes based on drill level ---- */
-  const nodes = useMemo<RenderNode[]>(() => {
-    if (drill.level === "year") {
-      const map = new Map<number, AIEvent[]>();
-      for (const e of events) {
-        const y = parseISO(e.event_date).getFullYear();
-        if (!map.has(y)) map.set(y, []);
-        map.get(y)!.push(e);
-      }
-      return Array.from(map.entries())
-        .sort(([a], [b]) => a - b)
-        .map(([year, evts], i) => {
-          const x = (year - 2012) * 160 + 120;
-          return {
-            key: `y-${year}`,
-            x,
-            y: i % 2 === 0 ? -35 : 35,
-            label: String(year),
-            subLabel: `${evts.length} 事件`,
-            isDrillable: true,
-            year,
-            events: evts,
-            maxImpact: Math.max(...evts.map((e) => e.impact_score)),
-            eventCount: evts.length,
-          };
-        });
+  const openNode = useCallback((node: RenderNode) => {
+    if (node.eventCount === 0) return;
+    if (node.isDrillable && drill.level === "year") {
+      onDrillDown(node.year);
+      return;
     }
-
-    if (drill.level === "month" && drill.year !== null) {
-      const map = new Map<number, AIEvent[]>();
-      for (const e of events) {
-        const d = parseISO(e.event_date);
-        if (d.getFullYear() !== drill.year) continue;
-        const m = d.getMonth();
-        if (!map.has(m)) map.set(m, []);
-        map.get(m)!.push(e);
-      }
-      const spacing = winW / 14;
-      return Array.from({ length: 12 }, (_, m) => {
-        const evts = map.get(m) || [];
-        return {
-          key: `m-${drill.year}-${m}`,
-          x: m * spacing + spacing * 1.2,
-          y: m % 2 === 0 ? -30 : 30,
-          label: monthNames[m],
-          subLabel: evts.length > 0 ? `${evts.length} 事件` : undefined,
-          isDrillable: evts.length > 0,
-          year: drill.year!,
-          month: m,
-          events: evts,
-          maxImpact: evts.length > 0 ? Math.max(...evts.map((e) => e.impact_score)) : 0,
-          eventCount: evts.length,
-        };
-      });
+    if (node.isDrillable && drill.level === "month") {
+      onDrillDown(node.year, node.month);
+      return;
     }
-
-    if (drill.level === "day" && drill.year !== null && drill.month !== null) {
-      const daysInMonth = getDaysInMonth(new Date(drill.year, drill.month, 1));
-      const map = new Map<number, AIEvent[]>();
-      for (const e of events) {
-        const d = parseISO(e.event_date);
-        if (d.getFullYear() !== drill.year || d.getMonth() !== drill.month) continue;
-        const day = d.getDate();
-        if (!map.has(day)) map.set(day, []);
-        map.get(day)!.push(e);
-      }
-      const spacing = winW / (daysInMonth + 4);
-      return Array.from({ length: daysInMonth }, (_, i) => {
-        const day = i + 1;
-        const evts = map.get(day) || [];
-        return {
-          key: `d-${drill.year}-${drill.month}-${day}`,
-          x: day * spacing + spacing * 1.5,
-          y: day % 2 === 0 ? -22 : 22,
-          label: `${day}日`,
-          subLabel: evts.length > 0 ? evts[0].title.slice(0, 12) + "…" : undefined,
-          isDrillable: false,
-          year: drill.year!,
-          month: drill.month!,
-          events: evts,
-          maxImpact: evts.length > 0 ? Math.max(...evts.map((e) => e.impact_score)) : 0,
-          eventCount: evts.length,
-        };
-      });
-    }
-
-    return [];
-  }, [events, drill, winW]);
+    onNodeClick(node.events[0]);
+  }, [drill.level, onDrillDown, onNodeClick]);
 
   if (viewMode === "grid") {
     return <GridView events={events} onNodeClick={onNodeClick} highlightedId={highlightedId} />;
   }
+
   if (viewMode === "list") {
     return <ListView events={events} onNodeClick={onNodeClick} highlightedId={highlightedId} />;
   }
 
+  const meta = levelMeta[drill.level];
   const midY = winH / 2;
 
   return (
     <div
-      ref={containerRef}
-      className="absolute inset-0 top-0 cursor-grab active:cursor-grabbing select-none"
+      className="absolute inset-0 z-10 cursor-grab select-none active:cursor-grabbing"
       onWheel={handleWheel}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
     >
-      <TimelineCanvas scrollX={scrollX} drill={drill} winW={winW} winH={winH} />
+      <TimelineCanvas scrollX={scrollX} drill={drill} nodes={nodes} winW={winW} winH={winH} />
 
-      {/* Title */}
       <motion.div
         key={`title-${drill.level}-${drill.year}-${drill.month}`}
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-        className="absolute left-8 top-28 pointer-events-none"
+        initial={{ opacity: 0, y: -18, filter: "blur(10px)" }}
+        animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+        transition={{ duration: 0.55, ease: "easeOut" }}
+        className="pointer-events-none absolute left-5 top-[104px] z-20 max-w-[calc(100vw-40px)] xl:left-[430px]"
       >
-        <h2 className="text-2xl font-display text-cosmos-text tracking-wide glow-text">
-          {drill.level === "year"
-            ? "AI 进化时间线"
-            : drill.level === "month"
-            ? `${drill.year} 年`
-            : `${drill.year}年${(drill.month ?? 0) + 1}月`}
+        <div className="flex items-center gap-3">
+          <span className="rounded-full border border-cosmos-gold/20 bg-cosmos-gold/10 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.24em] text-cosmos-gold">
+            {meta.code}
+          </span>
+          <span className="hidden h-px w-24 bg-gradient-to-r from-cosmos-gold/50 to-transparent md:block" />
+        </div>
+        <h2 className="mt-4 font-display text-4xl leading-none tracking-[-0.04em] aurora-text md:text-5xl">
+          {drill.level === "year" ? meta.title : drill.level === "month" ? `${drill.year} · ${meta.title}` : `${drill.year}.${(drill.month ?? 0) + 1} · ${meta.title}`}
         </h2>
-        <p className="text-xs text-cosmos-text-dim mt-1 tracking-wider">
-          {drill.level === "year"
-            ? "点击年份钻取查看月度事件"
-            : drill.level === "month"
-            ? "点击月份查看每日详情"
-            : "点击事件球查看详情"}
-        </p>
+        <p className="mt-3 max-w-xl text-sm leading-6 text-cosmos-text-dim">{meta.subtitle}</p>
       </motion.div>
 
-      {/* Render nodes */}
-      <div className="absolute inset-0 pointer-events-none" style={{ top: midY - 60 }}>
+      <div className="pointer-events-none absolute inset-0" style={{ top: midY - 130 }}>
         <AnimatePresence mode="wait">
           <motion.div
             key={`layer-${drill.level}-${drill.year}-${drill.month}`}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.35 }}
+            initial={{ opacity: 0, scale: 0.96, filter: "blur(18px)" }}
+            animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+            exit={{ opacity: 0, scale: 1.04, filter: "blur(18px)" }}
+            transition={{ duration: 0.48, ease: "easeOut" }}
             className="absolute inset-0"
           >
-            {nodes.map((node, i) => {
+            {nodes.map((node, index) => {
               const nodeX = node.x - scrollX;
-              const nodeY = 60 + node.y;
-              if (nodeX < -80 || nodeX > winW + 80) return null;
+              const nodeY = 130 + node.y;
+              if (nodeX < -180 || nodeX > winW + 180) return null;
 
-              const isHighlighted =
-                highlightedId != null && node.events.some((e) => e.id === highlightedId);
               const hasEvents = node.eventCount > 0;
-
-              /* size based on level + impact */
-              const baseSize =
-                drill.level === "year" ? 8 : drill.level === "month" ? 6 : 4.5;
-              const impactBonus = node.maxImpact >= 95 ? 3 : node.maxImpact >= 85 ? 1.5 : 0;
-              const size = baseSize + impactBonus * (drill.level === "day" ? 0.3 : 1);
-
-              const isGold = node.maxImpact >= 90;
-              const orbColor = isGold
+              const isHighlighted = highlightedId != null && node.events.some((event) => event.id === highlightedId);
+              const isMajor = node.maxImpact >= 95;
+              const isStrong = node.maxImpact >= 85;
+              const nodeSize = drill.level === "year" ? (isMajor ? 20 : 15) : drill.level === "month" ? (isStrong ? 17 : 12) : (hasEvents ? 11 : 5);
+              const cardWidth = drill.level === "day" ? 150 : drill.level === "month" ? 168 : 190;
+              const cardOffset = node.y < 0 ? -106 : 28;
+              const accent = isMajor
                 ? "rgba(240,192,96,ALPHA)"
                 : node.maxImpact >= 80
-                ? "rgba(91,141,239,ALPHA)"
-                : "rgba(139,92,246,ALPHA)";
-              const glowColor = isGold
-                ? "rgba(240,192,96,ALPHA)"
-                : "rgba(91,141,239,ALPHA)";
+                  ? "rgba(91,141,239,ALPHA)"
+                  : "rgba(139,92,246,ALPHA)";
 
               return (
                 <motion.div
                   key={node.key}
-                  initial={{ scale: 0, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
+                  initial={{ opacity: 0, y: node.y < 0 ? -28 : 28, scale: 0.72, rotateX: node.y < 0 ? 18 : -18 }}
+                  animate={{ opacity: 1, y: 0, scale: 1, rotateX: 0 }}
                   transition={{
-                    delay: i * (drill.level === "day" ? 0.01 : 0.04),
-                    duration: 0.4,
+                    delay: index * (drill.level === "day" ? 0.012 : 0.035),
+                    duration: 0.52,
                     type: "spring",
-                    stiffness: 200,
-                    damping: 18,
+                    stiffness: 210,
+                    damping: 22,
                   }}
                   className="absolute pointer-events-auto"
-                  style={{
-                    left: nodeX,
-                    top: nodeY,
-                    transform: "translate(-50%, -50%)",
-                  }}
+                  style={{ left: nodeX, top: nodeY, transform: "translate(-50%, -50%)" }}
                 >
-                  {/* Orbital ring */}
-                  {hasEvents && node.maxImpact >= 85 && drill.level === "year" && (
-                    <motion.div
-                      className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-cosmos-gold/20"
-                      style={{ width: size * 5, height: size * 5 }}
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 20 + i * 2, repeat: Infinity, ease: "linear" }}
-                    />
-                  )}
-                  {hasEvents && node.maxImpact >= 85 && drill.level === "month" && (
-                    <motion.div
-                      className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-cosmos-gold/12"
-                      style={{ width: size * 4, height: size * 4 }}
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 15 + i * 2, repeat: Infinity, ease: "linear" }}
-                    />
+                  {hasEvents && (
+                    <>
+                      <motion.div
+                        className="absolute left-1/2 top-1/2 rounded-full border border-cosmos-gold/20"
+                        style={{ width: nodeSize * 4.7, height: nodeSize * 4.7, marginLeft: nodeSize * -2.35, marginTop: nodeSize * -2.35 }}
+                        animate={{ rotate: 360, scale: [1, 1.08, 1] }}
+                        transition={{ rotate: { duration: 18 + index, repeat: Infinity, ease: "linear" }, scale: { duration: 4, repeat: Infinity } }}
+                      />
+                      {isStrong && (
+                        <motion.div
+                          className="absolute left-1/2 top-1/2 rounded-full border border-cosmos-blue/18"
+                          style={{ width: nodeSize * 6.2, height: nodeSize * 6.2, marginLeft: nodeSize * -3.1, marginTop: nodeSize * -3.1 }}
+                          animate={{ rotate: -360 }}
+                          transition={{ duration: 24 + index * 0.5, repeat: Infinity, ease: "linear" }}
+                        />
+                      )}
+                    </>
                   )}
 
-                  {/* Clickable orb */}
                   <button
-                    onClick={() => {
-                      if (!hasEvents) return;
-                      if (node.isDrillable && drill.level !== "day") {
-                        onDrillDown(node.year, node.month);
-                      } else if (drill.level === "day" && node.events.length === 1) {
-                        onNodeClick(node.events[0]);
-                      } else if (drill.level === "day" && node.events.length > 1) {
-                        const top = node.events.reduce((a, b) =>
-                          a.impact_score >= b.impact_score ? a : b
-                        );
-                        onNodeClick(top);
-                      } else if (drill.level === "year" && node.isDrillable) {
-                        onDrillDown(node.year);
-                      } else if (drill.level === "month" && node.isDrillable) {
-                        onDrillDown(node.year, node.month);
-                      }
-                    }}
-                    onMouseEnter={(e) => {
+                    onClick={() => openNode(node)}
+                    onMouseEnter={() => {
                       if (!hasEvents) return;
                       setHoveredNode(node);
-                      setTooltipPos({ x: nodeX, y: 60 + node.y - size * 3 });
+                      setTooltipPos({ x: nodeX, y: nodeY + cardOffset });
                     }}
                     onMouseLeave={() => setHoveredNode(null)}
-                    aria-label={
+                    aria-label={hasEvents ? `${node.label}: ${node.eventCount} 个事件` : `${node.label}: 无事件`}
+                    className={`relative z-10 flex items-center justify-center rounded-full border transition-all duration-300 ${
                       hasEvents
-                        ? `${node.label}: ${node.eventCount}个事件`
-                        : `${node.label}: 无事件`
-                    }
-                    className={`block relative z-10 transition-all duration-300 ${
-                      hasEvents
-                        ? "hover:scale-150 cursor-pointer"
-                        : "cursor-default opacity-30"
+                        ? "cursor-pointer border-cosmos-gold/35 hover:scale-125 hover:border-cosmos-gold/80"
+                        : "cursor-default border-white/10 opacity-25"
                     }`}
-                    style={{ width: size * 2.2, height: size * 2.2 }}
+                    style={{
+                      width: nodeSize * 2,
+                      height: nodeSize * 2,
+                      background: hasEvents
+                        ? `radial-gradient(circle at 34% 28%, ${accent.replace("ALPHA", "0.96")} 0%, ${accent.replace("ALPHA", "0.42")} 48%, rgba(3,4,10,0.12) 100%)`
+                        : "rgba(255,255,255,0.06)",
+                      boxShadow: hasEvents
+                        ? isHighlighted
+                          ? `0 0 ${nodeSize * 4}px ${accent.replace("ALPHA", "0.78")}, inset 0 0 ${nodeSize}px rgba(255,255,255,0.22)`
+                          : `0 0 ${nodeSize * 2.8}px ${accent.replace("ALPHA", isStrong ? "0.42" : "0.18")}`
+                        : "none",
+                    }}
                   >
-                    {/* Outer glow */}
-                    {hasEvents && (
-                      <motion.div
-                        className="absolute inset-0 rounded-full"
-                        style={{
-                          background: `radial-gradient(circle, ${glowColor.replace("ALPHA", "0.35")} 0%, transparent 70%)`,
-                        }}
-                        animate={{ scale: [1, 1.3, 1] }}
-                        transition={{ duration: 3 + i * 0.7, repeat: Infinity, ease: "easeInOut" }}
-                      />
-                    )}
-                    {/* Core */}
-                    <div
-                      className="absolute inset-[15%] rounded-full transition-shadow duration-300"
-                      style={{
-                        background: isHighlighted
-                          ? `radial-gradient(circle at 40% 35%, ${orbColor.replace("ALPHA", "0.95")} 0%, ${orbColor.replace("ALPHA", "0.5")} 50%, transparent 100%)`
-                          : `radial-gradient(circle at 40% 35%, ${orbColor.replace("ALPHA", "0.85")} 0%, ${orbColor.replace("ALPHA", "0.35")} 50%, transparent 100%)`,
-                        boxShadow: isHighlighted
-                          ? `0 0 ${size * 4}px ${glowColor.replace("ALPHA", "0.7")}`
-                          : hasEvents && node.maxImpact >= 90
-                          ? `0 0 ${size * 2.5}px ${glowColor.replace("ALPHA", "0.35")}`
-                          : "none",
-                      }}
-                    />
+                    {hasEvents && <span className="h-1.5 w-1.5 rounded-full bg-white/80 shadow-[0_0_10px_rgba(255,255,255,0.65)]" />}
                   </button>
 
-                  {/* Label */}
                   <div
-                    className="absolute left-1/2 -translate-x-1/2 whitespace-nowrap pointer-events-none"
-                    style={{ top: size * 1.5 + 8 }}
+                    className="absolute left-1/2 z-0 -translate-x-1/2 pointer-events-none"
+                    style={{ top: cardOffset, width: cardWidth }}
                   >
-                    <span
-                      className={`text-center font-mono transition-all duration-300 ${
-                        drill.level === "day"
-                          ? "text-[9px]"
-                          : drill.level === "month"
-                          ? "text-[10px]"
-                          : "text-xs"
-                      } ${
-                        isHighlighted
-                          ? "text-cosmos-gold"
-                          : hasEvents
-                          ? "text-cosmos-text-dim"
-                          : "text-cosmos-text-dim/30"
-                      }`}
-                    >
-                      {node.label}
-                    </span>
-                    {node.subLabel && (
-                      <span className="block text-[8px] text-cosmos-text-dim/60 mt-0.5 text-center">
-                        {node.subLabel}
-                      </span>
-                    )}
+                    <div className={`rounded-2xl border px-4 py-3 backdrop-blur-xl transition-all duration-300 ${
+                      hasEvents
+                        ? "border-white/[0.09] bg-[#080a16]/72 shadow-[0_18px_55px_rgba(0,0,0,0.36)]"
+                        : "border-white/[0.035] bg-white/[0.025]"
+                    }`}>
+                      <div className="flex items-center justify-between gap-3">
+                        <span className={`font-mono ${drill.level === "day" ? "text-xl" : "text-2xl"} leading-none ${hasEvents ? "text-cosmos-text" : "text-cosmos-text-dim/45"}`}>
+                          {node.label}
+                        </span>
+                        {hasEvents && (
+                          <span className="rounded-full bg-cosmos-gold/10 px-2 py-0.5 font-mono text-[9px] text-cosmos-gold">
+                            {node.maxImpact}
+                          </span>
+                        )}
+                      </div>
+                      {node.subLabel && (
+                        <p className={`mt-2 line-clamp-2 text-[10px] leading-4 ${hasEvents ? "text-cosmos-text-dim" : "text-cosmos-text-dim/35"}`}>
+                          {node.subLabel}
+                        </p>
+                      )}
+                      {hasEvents && (
+                        <div className="mt-3 h-1 overflow-hidden rounded-full bg-white/[0.08]">
+                          <motion.div
+                            initial={{ width: 0 }}
+                            animate={{ width: `${node.maxImpact}%` }}
+                            transition={{ duration: 0.75, delay: 0.12 + index * 0.015 }}
+                            className="h-full rounded-full bg-gradient-to-r from-cosmos-blue via-cosmos-gold to-cosmos-accent"
+                          />
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </motion.div>
               );
@@ -730,32 +672,39 @@ export function Timeline({
         </AnimatePresence>
       </div>
 
-      {/* Tooltip */}
       <AnimatePresence>
-        {hoveredNode && hoveredNode.eventCount > 1 && (
+        {hoveredNode && hoveredNode.eventCount > 0 && (
           <motion.div
-            initial={{ opacity: 0, y: 5 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            className="fixed z-50 glass-card p-3 min-w-[200px] max-w-[280px] pointer-events-none"
+            initial={{ opacity: 0, y: 10, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 8, scale: 0.96 }}
+            transition={{ duration: 0.18 }}
+            className="fixed z-50 w-[300px] max-w-[calc(100vw-32px)] rounded-3xl border border-white/[0.09] bg-[#070914]/88 p-4 shadow-[0_24px_90px_rgba(0,0,0,0.58)] backdrop-blur-2xl pointer-events-none"
             style={{
-              left: Math.min(tooltipPos.x, winW - 300),
-              top: tooltipPos.y,
-              transform: "translate(-50%, -100%)",
+              left: Math.max(16, Math.min(tooltipPos.x - 150, winW - 316)),
+              top: Math.max(100, Math.min(tooltipPos.y, winH - 230)),
             }}
           >
-            <p className="text-[9px] text-cosmos-text-dim mb-1.5 uppercase tracking-wider">
-              {hoveredNode.label} · {hoveredNode.eventCount} 个事件
-            </p>
-            {hoveredNode.events.slice(0, 3).map((e) => (
-              <p key={e.id} className="text-[11px] text-cosmos-text leading-snug truncate">
-                {e.title}
+            <div className="flex items-center justify-between gap-3">
+              <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-cosmos-gold">
+                {hoveredNode.label} · {hoveredNode.eventCount} Events
               </p>
-            ))}
+              <span className="rounded-full bg-white/[0.06] px-2 py-0.5 font-mono text-[10px] text-cosmos-text-dim">
+                {hoveredNode.maxImpact}
+              </span>
+            </div>
+            <div className="mt-3 space-y-2">
+              {hoveredNode.events.slice(0, 3).map((event) => (
+                <div key={event.id} className="rounded-2xl bg-white/[0.04] px-3 py-2">
+                  <p className="truncate text-xs text-cosmos-text">{event.title}</p>
+                  <p className="mt-1 font-mono text-[9px] text-cosmos-text-dim">
+                    {format(parseISO(event.event_date), "yyyy.MM.dd")}
+                  </p>
+                </div>
+              ))}
+            </div>
             {hoveredNode.events.length > 3 && (
-              <p className="text-[10px] text-cosmos-text-dim mt-0.5">
-                +{hoveredNode.events.length - 3} 更多…
-              </p>
+              <p className="mt-2 text-[10px] text-cosmos-text-dim">+{hoveredNode.events.length - 3} 更多事件</p>
             )}
           </motion.div>
         )}

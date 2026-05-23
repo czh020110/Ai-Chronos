@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { AIEvent } from "@/lib/types";
 import { format, parseISO } from "date-fns";
+import { tagClass } from "@/lib/tagStyles";
 
 interface SearchPanelProps {
   events: AIEvent[];
@@ -12,7 +13,7 @@ interface SearchPanelProps {
   onSelect: (event: AIEvent) => void;
 }
 
-import { tagClass } from "@/lib/tagStyles";
+const hints = ["Transformer", "ChatGPT", "DeepSeek", "开源", "论文", "商业化"];
 
 export function SearchPanel({ events, isOpen, onClose, onSelect }: SearchPanelProps) {
   const [query, setQuery] = useState("");
@@ -27,13 +28,14 @@ export function SearchPanel({ events, isOpen, onClose, onSelect }: SearchPanelPr
     }
   }, [isOpen]);
 
+  const normalizedQuery = query.toLowerCase();
   const filtered =
     query.length > 0
       ? events.filter(
-          (e) =>
-            e.title.toLowerCase().includes(query.toLowerCase()) ||
-            e.tags.some((t) => t.includes(query)) ||
-            e.content_md.toLowerCase().includes(query.toLowerCase())
+          (event) =>
+            event.title.toLowerCase().includes(normalizedQuery) ||
+            event.tags.some((tag) => tag.includes(query)) ||
+            event.content_md.toLowerCase().includes(normalizedQuery)
         )
       : [];
 
@@ -54,7 +56,7 @@ export function SearchPanel({ events, isOpen, onClose, onSelect }: SearchPanelPr
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, selectedIdx, filtered.length]);
+  }, [isOpen, selectedIdx, filtered, onClose, onSelect]);
 
   return (
     <AnimatePresence>
@@ -64,120 +66,110 @@ export function SearchPanel({ events, isOpen, onClose, onSelect }: SearchPanelPr
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
+            className="fixed inset-0 z-50 bg-[#03040a]/72 backdrop-blur-[7px]"
             onClick={onClose}
           />
 
           <motion.div
-            initial={{ opacity: 0, y: -20, scale: 0.97 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -20, scale: 0.97 }}
-            transition={{ duration: 0.2 }}
-            className="fixed top-24 left-1/2 -translate-x-1/2 z-50 w-full max-w-xl"
+            initial={{ opacity: 0, y: -26, scale: 0.96, filter: "blur(12px)" }}
+            animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
+            exit={{ opacity: 0, y: -24, scale: 0.96, filter: "blur(12px)" }}
+            transition={{ duration: 0.24, ease: "easeOut" }}
+            className="fixed left-1/2 top-24 z-50 w-full max-w-2xl -translate-x-1/2 px-4"
           >
-            <div className="glass-card overflow-hidden mx-4">
-              <div className="flex items-center gap-3 px-5 py-4 border-b border-cosmos-border">
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  className="text-cosmos-gold"
-                >
-                  <circle cx="11" cy="11" r="8" />
-                  <path d="m21 21-4.3-4.3" />
-                </svg>
-                <input
-                  ref={inputRef}
-                  type="text"
-                  value={query}
-                  onChange={(e) => {
-                    setQuery(e.target.value);
-                    setSelectedIdx(0);
-                  }}
-                  placeholder="搜索 AI 事件、论文、模型…"
-                  className="flex-1 bg-transparent text-sm text-cosmos-text placeholder-cosmos-text-dim outline-none font-ui"
-                />
-                <kbd className="text-[10px] px-1.5 py-0.5 rounded bg-cosmos-border text-cosmos-text-dim">
+            <div className="relative overflow-hidden rounded-[32px] border border-white/[0.1] bg-[#070914]/90 shadow-[0_32px_120px_rgba(0,0,0,0.62)] backdrop-blur-2xl">
+              <div className="pointer-events-none absolute -left-24 -top-24 h-56 w-56 rounded-full bg-cosmos-blue/14 blur-3xl" />
+              <div className="pointer-events-none absolute -right-20 top-10 h-48 w-48 rounded-full bg-cosmos-gold/12 blur-3xl" />
+              <div className="relative z-10 flex items-center gap-4 border-b border-white/[0.08] px-5 py-5 md:px-6">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-cosmos-gold/20 bg-cosmos-gold/10 text-cosmos-gold">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                    <circle cx="11" cy="11" r="8" />
+                    <path d="m21 21-4.3-4.3" />
+                  </svg>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="mb-1 font-mono text-[10px] uppercase tracking-[0.24em] text-cosmos-gold/78">Command Search</p>
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    value={query}
+                    onChange={(event) => {
+                      setQuery(event.target.value);
+                      setSelectedIdx(0);
+                    }}
+                    placeholder="搜索模型、论文、开源项目、时间节点…"
+                    className="w-full bg-transparent text-base text-cosmos-text placeholder:text-cosmos-text-dim/55 outline-none"
+                  />
+                </div>
+                <kbd className="rounded-full border border-white/[0.08] bg-white/[0.04] px-2.5 py-1 font-mono text-[10px] text-cosmos-text-dim">
                   ESC
                 </kbd>
               </div>
 
-              {query.length > 0 && (
-                <div className="max-h-80 overflow-y-auto">
-                  {filtered.length === 0 ? (
-                    <div className="px-5 py-10 text-center text-sm text-cosmos-text-dim">
-                      未找到相关事件
-                    </div>
-                  ) : (
-                    filtered.slice(0, 8).map((event, idx) => (
-                      <button
-                        key={event.id}
-                        onClick={() => onSelect(event)}
-                        className={`w-full text-left px-5 py-3.5 flex items-start gap-4 transition-colors duration-150 ${
-                          idx === selectedIdx
-                            ? "bg-cosmos-gold/10"
-                            : "hover:bg-cosmos-surface"
-                        }`}
-                      >
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm text-cosmos-text truncate font-medium">
-                            {event.title}
-                          </p>
-                          <div className="flex items-center gap-2 mt-1.5">
-                            <span className="text-[10px] text-cosmos-text-dim">
-                              {format(parseISO(event.event_date), "yyyy年M月d日")}
-                            </span>
-                            <div className="flex gap-1">
+              <div className="relative z-10">
+                {query.length > 0 ? (
+                  <div className="max-h-[440px] overflow-y-auto p-3">
+                    {filtered.length === 0 ? (
+                      <div className="px-5 py-14 text-center">
+                        <p className="font-display text-xl text-cosmos-text">没有找到匹配事件</p>
+                        <p className="mt-2 text-sm text-cosmos-text-dim">尝试搜索 GPT、Transformer、论文或开源。</p>
+                      </div>
+                    ) : (
+                      filtered.slice(0, 8).map((event, idx) => (
+                        <button
+                          key={event.id}
+                          onClick={() => onSelect(event)}
+                          className={`group mb-2 grid w-full grid-cols-[1fr_auto] gap-4 rounded-3xl border px-4 py-4 text-left transition-all duration-180 last:mb-0 ${
+                            idx === selectedIdx
+                              ? "border-cosmos-gold/30 bg-cosmos-gold/10 shadow-[0_0_38px_rgba(212,168,83,0.1)]"
+                              : "border-white/[0.055] bg-white/[0.03] hover:border-white/[0.1] hover:bg-white/[0.05]"
+                          }`}
+                        >
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-medium text-cosmos-text transition-colors group-hover:text-cosmos-gold">
+                              {event.title}
+                            </p>
+                            <div className="mt-2 flex flex-wrap items-center gap-2">
+                              <span className="font-mono text-[10px] text-cosmos-text-dim">
+                                {format(parseISO(event.event_date), "yyyy.MM.dd")}
+                              </span>
                               {event.tags.map((tag) => (
-                                <span
-                                  key={tag}
-                                  className={`text-[9px] px-1.5 py-0.5 rounded-full ${tagClass[tag] || "text-cosmos-text-dim bg-cosmos-surface"}`}
-                                >
+                                <span key={tag} className={`rounded-full px-2 py-0.5 text-[9px] ${tagClass[tag] || "border border-white/10 bg-white/5 text-cosmos-text-dim"}`}>
                                   {tag}
                                 </span>
                               ))}
                             </div>
                           </div>
-                        </div>
-                        <span
-                          className={`text-[10px] mt-1 px-1.5 py-0.5 rounded-full ${
+                          <span className={`mt-1 h-fit rounded-full px-2.5 py-1 font-mono text-[10px] ${
                             event.impact_score >= 90
-                              ? "bg-cosmos-gold/20 text-cosmos-gold"
-                              : "bg-cosmos-surface text-cosmos-text-dim"
-                          }`}
-                        >
-                          {event.impact_score}
-                        </span>
-                      </button>
-                    ))
-                  )}
-                </div>
-              )}
-
-              {query.length === 0 && (
-                <div className="px-5 py-6 text-center">
-                  <p className="text-xs text-cosmos-text-dim">
-                    输入关键词搜索 AI 历史事件
-                  </p>
-                  <div className="flex flex-wrap justify-center gap-1.5 mt-3">
-                    {["Transformer", "GPT", "开源", "论文", "DeepSeek"].map(
-                      (hint) => (
+                              ? "bg-cosmos-gold/14 text-cosmos-gold"
+                              : "bg-white/[0.055] text-cosmos-text-dim"
+                          }`}>
+                            {event.impact_score}
+                          </span>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                ) : (
+                  <div className="px-6 py-7">
+                    <p className="text-sm leading-6 text-cosmos-text-dim">
+                      输入关键词可定位事件并在时间线中高亮。支持标题、标签与 Markdown 内容搜索。
+                    </p>
+                    <div className="mt-5 flex flex-wrap gap-2">
+                      {hints.map((hint) => (
                         <button
                           key={hint}
                           onClick={() => setQuery(hint)}
-                          className="text-[10px] px-2.5 py-1 rounded-full glass-card-light text-cosmos-text-dim hover:text-cosmos-text transition-colors"
+                          className="rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1.5 text-xs text-cosmos-text-dim transition-all hover:border-cosmos-gold/25 hover:bg-cosmos-gold/10 hover:text-cosmos-gold"
                         >
                           {hint}
                         </button>
-                      )
-                    )}
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </motion.div>
         </>

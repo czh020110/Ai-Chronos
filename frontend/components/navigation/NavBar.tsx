@@ -9,71 +9,84 @@ interface NavBarProps {
 export function NavBar({ onSearchOpen }: NavBarProps) {
   return (
     <motion.header
-      initial={{ y: -60, opacity: 0 }}
+      initial={{ y: -28, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.6, ease: "easeOut" }}
-      className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-8 py-4"
+      transition={{ duration: 0.65, ease: "easeOut" }}
+      className="fixed left-4 right-4 top-4 z-50 flex items-center justify-between rounded-[28px] border border-white/[0.08] bg-[#050711]/62 px-4 py-3 shadow-[0_18px_70px_rgba(0,0,0,0.42)] backdrop-blur-2xl md:left-6 md:right-6 md:px-5"
     >
       <div className="flex items-center gap-4">
-        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-cosmos-gold to-cosmos-accent flex items-center justify-center">
-          <span className="text-cosmos-bg font-bold text-sm">C</span>
+        <div className="relative h-11 w-11 overflow-hidden rounded-2xl border border-cosmos-gold/20 bg-cosmos-gold/10 shadow-[0_0_34px_rgba(212,168,83,0.12)]">
+          <motion.div
+            className="absolute inset-1 rounded-full border border-cosmos-gold/35"
+            animate={{ rotate: 360 }}
+            transition={{ duration: 16, repeat: Infinity, ease: "linear" }}
+          />
+          <motion.div
+            className="absolute inset-[13px] rounded-full bg-gradient-to-br from-cosmos-gold to-cosmos-accent"
+            animate={{ scale: [1, 1.15, 1] }}
+            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+          />
         </div>
         <div>
-          <h1 className="text-lg font-display text-cosmos-text tracking-wide">
-            AI Chronos
-          </h1>
-          <p className="text-[10px] text-cosmos-text-dim tracking-widest uppercase">
-            智纪元
+          <div className="flex items-baseline gap-2">
+            <h1 className="font-display text-lg tracking-[-0.02em] text-cosmos-text md:text-xl">
+              AI Chronos
+            </h1>
+            <span className="hidden font-mono text-[10px] uppercase tracking-[0.26em] text-cosmos-gold/80 sm:inline">
+              智纪元
+            </span>
+          </div>
+          <p className="hidden text-[10px] tracking-[0.28em] text-cosmos-text-dim md:block">
+            INTELLIGENCE EVOLUTION ATLAS
           </p>
         </div>
       </div>
 
-      <nav className="hidden md:flex items-center gap-6">
-        <button className="text-xs text-cosmos-text tracking-wider uppercase transition-colors duration-300" aria-label="时间线视图">
+      <nav className="hidden items-center gap-1 rounded-full border border-white/[0.06] bg-white/[0.035] p-1 md:flex">
+        <button className="rounded-full bg-cosmos-gold/12 px-4 py-2 text-xs tracking-wider text-cosmos-gold shadow-[inset_0_0_0_1px_rgba(212,168,83,0.16)]" aria-label="时间线视图">
           时间线
         </button>
         <button
           disabled
           title="敬请期待"
-          className="text-xs text-cosmos-text-dim/40 cursor-not-allowed tracking-wider uppercase transition-colors duration-300"
+          className="cursor-not-allowed rounded-full px-4 py-2 text-xs tracking-wider text-cosmos-text-dim/42"
           aria-label="数据面板（即将推出）"
         >
-          数据
+          数据库
         </button>
         <button
           disabled
           title="敬请期待"
-          className="text-xs text-cosmos-text-dim/40 cursor-not-allowed tracking-wider uppercase transition-colors duration-300"
+          className="cursor-not-allowed rounded-full px-4 py-2 text-xs tracking-wider text-cosmos-text-dim/42"
           aria-label="关于页面（即将推出）"
         >
-          关于
+          研究室
         </button>
       </nav>
 
-      <div className="flex items-center gap-3">
-        <button
-          onClick={onSearchOpen}
-          aria-label="打开搜索面板"
-          className="flex items-center gap-2 px-4 py-2 glass-card-light text-cosmos-text-dim hover:text-cosmos-text transition-all duration-300"
+      <button
+        onClick={onSearchOpen}
+        aria-label="打开搜索面板"
+        className="group flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.045] px-3 py-2 text-cosmos-text-dim transition-all duration-300 hover:border-cosmos-gold/25 hover:bg-cosmos-gold/10 hover:text-cosmos-text md:px-4"
+      >
+        <svg
+          width="15"
+          height="15"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          className="transition-transform duration-300 group-hover:scale-110"
         >
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-          >
-            <circle cx="11" cy="11" r="8" />
-            <path d="m21 21-4.3-4.3" />
-          </svg>
-          <span className="text-xs tracking-wider">搜索</span>
-          <kbd className="hidden sm:inline text-[10px] px-1.5 py-0.5 rounded bg-cosmos-border text-cosmos-text-dim">
-            ⌘K
-          </kbd>
-        </button>
-      </div>
+          <circle cx="11" cy="11" r="8" />
+          <path d="m21 21-4.3-4.3" />
+        </svg>
+        <span className="hidden text-xs tracking-wider sm:inline">搜索事件</span>
+        <kbd className="hidden rounded-full bg-black/30 px-2 py-0.5 font-mono text-[10px] text-cosmos-text-dim sm:inline">
+          ⌘K
+        </kbd>
+      </button>
     </motion.header>
   );
 }
