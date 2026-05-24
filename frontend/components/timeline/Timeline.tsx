@@ -4,6 +4,7 @@ import { useRef, useEffect, useCallback, useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   AIEvent,
+  ThemeMode,
   TimelineFocus,
   TimelineScale,
   TimelineUnit,
@@ -19,6 +20,7 @@ interface TimelineProps {
   onFocusChange: (focus: TimelineFocus | null) => void;
   onNodeClick: (event: AIEvent) => void;
   highlightedId: string | null;
+  theme: ThemeMode;
 }
 
 type TimeUnit = TimelineUnit;
@@ -234,12 +236,14 @@ function TimelineCanvas({
   layout,
   winW,
   winH,
+  theme,
 }: {
   scrollX: number;
   globalRotation: number;
   layout: LayoutMetrics;
   winW: number;
   winH: number;
+  theme: ThemeMode;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -257,23 +261,24 @@ function TimelineCanvas({
     const width = canvas.offsetWidth;
     const height = canvas.offsetHeight;
     const axisY = Math.max(350, height * 0.6);
+    const isDay = theme === "day";
 
     ctx.clearRect(0, 0, width, height);
 
     const horizon = ctx.createLinearGradient(0, axisY - 260, 0, axisY + 260);
-    horizon.addColorStop(0, "rgba(91,141,239,0)");
-    horizon.addColorStop(0.38, "rgba(91,141,239,0.05)");
-    horizon.addColorStop(0.5, "rgba(240,192,96,0.12)");
-    horizon.addColorStop(0.62, "rgba(139,92,246,0.055)");
-    horizon.addColorStop(1, "rgba(91,141,239,0)");
+    horizon.addColorStop(0, isDay ? "rgba(255,255,255,0)" : "rgba(91,141,239,0)");
+    horizon.addColorStop(0.38, isDay ? "rgba(104,145,210,0.045)" : "rgba(91,141,239,0.05)");
+    horizon.addColorStop(0.5, isDay ? "rgba(156,111,58,0.07)" : "rgba(240,192,96,0.12)");
+    horizon.addColorStop(0.62, isDay ? "rgba(130,121,176,0.04)" : "rgba(139,92,246,0.055)");
+    horizon.addColorStop(1, isDay ? "rgba(255,255,255,0)" : "rgba(91,141,239,0)");
     ctx.fillStyle = horizon;
     ctx.fillRect(0, axisY - 260, width, 520);
 
     ctx.save();
-    ctx.strokeStyle = "rgba(240,192,96,0.34)";
-    ctx.lineWidth = 1;
-    ctx.shadowBlur = 18;
-    ctx.shadowColor = "rgba(240,192,96,0.28)";
+    ctx.strokeStyle = isDay ? "rgba(98,92,82,0.22)" : "rgba(240,192,96,0.34)";
+    ctx.lineWidth = isDay ? 1.15 : 1;
+    ctx.shadowBlur = isDay ? 0 : 18;
+    ctx.shadowColor = isDay ? "rgba(98,92,82,0)" : "rgba(240,192,96,0.28)";
     ctx.beginPath();
     ctx.moveTo(0, axisY);
     ctx.lineTo(width, axisY);
@@ -285,25 +290,25 @@ function TimelineCanvas({
         radius: ORBIT_RADIUS.year,
         opacity: 1,
         step: ANGLE_STEP.year / Math.max(layout.yearGap, 1),
-        rgb: "240,192,96",
-        frontAlpha: 0.24,
-        backAlpha: 0.12,
-        frontBlur: 20,
-        backBlur: 12,
-        frontWidth: 1.2,
-        backWidth: 0.9,
+        rgb: isDay ? "150,113,62" : "240,192,96",
+        frontAlpha: isDay ? 0.2 : 0.24,
+        backAlpha: isDay ? 0.1 : 0.12,
+        frontBlur: isDay ? 0 : 20,
+        backBlur: isDay ? 0 : 12,
+        frontWidth: isDay ? 1.1 : 1.2,
+        backWidth: isDay ? 0.78 : 0.9,
       },
       {
         radius: ORBIT_RADIUS.month,
         opacity: layout.monthReveal,
         step: ANGLE_STEP.month / Math.max(layout.monthGap, 1),
-        rgb: "91,141,239",
-        frontAlpha: 0.22,
-        backAlpha: 0.1,
-        frontBlur: 18,
-        backBlur: 10,
-        frontWidth: 1.1,
-        backWidth: 0.8,
+        rgb: isDay ? "82,119,179" : "91,141,239",
+        frontAlpha: isDay ? 0.18 : 0.22,
+        backAlpha: isDay ? 0.08 : 0.1,
+        frontBlur: isDay ? 0 : 18,
+        backBlur: isDay ? 0 : 10,
+        frontWidth: isDay ? 1 : 1.1,
+        backWidth: isDay ? 0.72 : 0.8,
       },
       {
         radius: ORBIT_RADIUS.day,
@@ -311,18 +316,18 @@ function TimelineCanvas({
         step:
           ANGLE_STEP.day /
           Math.max(layout.daySpread > 0 ? layout.daySpread : layout.monthGap, 1),
-        rgb: "139,92,246",
-        frontAlpha: 0.18,
-        backAlpha: 0.08,
-        frontBlur: 16,
-        backBlur: 9,
-        frontWidth: 0.95,
-        backWidth: 0.7,
+        rgb: isDay ? "118,109,170" : "139,92,246",
+        frontAlpha: isDay ? 0.12 : 0.18,
+        backAlpha: isDay ? 0.055 : 0.08,
+        frontBlur: isDay ? 0 : 16,
+        backBlur: isDay ? 0 : 9,
+        frontWidth: isDay ? 0.82 : 0.95,
+        backWidth: isDay ? 0.58 : 0.7,
       },
     ];
 
     ctx.save();
-    ctx.globalCompositeOperation = "screen";
+    ctx.globalCompositeOperation = isDay ? "source-over" : "screen";
 
     for (const track of tracks) {
       if (track.opacity <= 0.01) continue;
@@ -354,7 +359,7 @@ function TimelineCanvas({
     ctx.restore();
 
     ctx.save();
-    ctx.globalCompositeOperation = "screen";
+    ctx.globalCompositeOperation = isDay ? "source-over" : "screen";
     const centerGlow = ctx.createRadialGradient(
       width / 2,
       axisY,
@@ -363,15 +368,22 @@ function TimelineCanvas({
       axisY,
       190,
     );
-    centerGlow.addColorStop(0, "rgba(255,236,180,0.28)");
-    centerGlow.addColorStop(0.2, "rgba(240,192,96,0.13)");
-    centerGlow.addColorStop(0.56, "rgba(91,141,239,0.05)");
-    centerGlow.addColorStop(0.82, "rgba(139,92,246,0.04)");
-    centerGlow.addColorStop(1, "rgba(255,255,255,0)");
+    if (isDay) {
+      centerGlow.addColorStop(0, "rgba(255,255,255,0.04)");
+      centerGlow.addColorStop(0.28, "rgba(156,111,58,0.035)");
+      centerGlow.addColorStop(0.6, "rgba(82,119,179,0.025)");
+      centerGlow.addColorStop(1, "rgba(255,255,255,0)");
+    } else {
+      centerGlow.addColorStop(0, "rgba(255,236,180,0.28)");
+      centerGlow.addColorStop(0.2, "rgba(240,192,96,0.13)");
+      centerGlow.addColorStop(0.56, "rgba(91,141,239,0.05)");
+      centerGlow.addColorStop(0.82, "rgba(139,92,246,0.04)");
+      centerGlow.addColorStop(1, "rgba(255,255,255,0)");
+    }
     ctx.fillStyle = centerGlow;
     ctx.fillRect(width / 2 - 220, axisY - 220, 440, 440);
     ctx.restore();
-  }, [scrollX, globalRotation, layout, winW, winH]);
+  }, [scrollX, globalRotation, layout, winW, winH, theme]);
 
   return (
     <canvas
@@ -385,11 +397,15 @@ function GridView({
   events,
   onNodeClick,
   highlightedId,
+  theme,
 }: {
   events: AIEvent[];
   onNodeClick: (event: AIEvent) => void;
   highlightedId: string | null;
+  theme: ThemeMode;
 }) {
+  const isDay = theme === "day";
+
   return (
     <div className="absolute inset-x-0 bottom-0 top-24 z-20 overflow-y-auto px-5 pb-28 2xl:right-[335px]">
       <div className="mx-auto grid max-w-6xl grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -403,8 +419,12 @@ function GridView({
               scale: 1,
               boxShadow:
                 highlightedId === event.id
-                  ? "0 0 0 1px rgba(240,192,96,0.5), 0 22px 70px rgba(212,168,83,0.16)"
-                  : "0 22px 70px rgba(0,0,0,0.32)",
+                  ? isDay
+                    ? "0 0 0 1px rgba(162,118,46,0.28), 0 14px 34px rgba(132,104,68,0.1)"
+                    : "0 0 0 1px rgba(240,192,96,0.5), 0 22px 70px rgba(212,168,83,0.16)"
+                  : isDay
+                    ? "0 10px 28px rgba(84,75,62,0.08)"
+                    : "0 22px 70px rgba(0,0,0,0.32)",
             }}
             transition={{
               delay: index * 0.025,
@@ -439,7 +459,7 @@ function GridView({
                   {event.tags.slice(0, 3).map((tag) => (
                     <span
                       key={tag}
-                      className="rounded-full border border-white/10 bg-white/[0.04] px-2 py-0.5 text-[10px] text-cosmos-text-dim"
+                      className="rounded-full border border-white/10 bg-cosmos-surface/55 px-2 py-0.5 text-[10px] text-cosmos-text-dim"
                     >
                       {tag}
                     </span>
@@ -476,7 +496,7 @@ function ListView({
             className={`group grid w-full grid-cols-[88px_1fr_auto] items-center gap-5 rounded-2xl border px-5 py-4 text-left backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 hover:border-cosmos-gold/25 ${
               highlightedId === event.id
                 ? "border-cosmos-gold/45 bg-cosmos-gold/10 shadow-[0_0_34px_rgba(212,168,83,0.18)]"
-                : "border-white/[0.07] bg-white/[0.035]"
+                : "border-cosmos-border/30 bg-white/[0.035]"
             }`}
           >
             <div className="font-mono text-right">
@@ -502,7 +522,7 @@ function ListView({
                 ))}
               </div>
             </div>
-            <span className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 font-mono text-[10px] text-cosmos-text-dim">
+            <span className="rounded-full border border-white/10 bg-cosmos-surface/55 px-2.5 py-1 font-mono text-[10px] text-cosmos-text-dim">
               {event.impact_score}
             </span>
           </motion.button>
@@ -520,6 +540,7 @@ export function Timeline({
   onFocusChange,
   onNodeClick,
   highlightedId,
+  theme,
 }: TimelineProps) {
   const [scrollX, setScrollX] = useState(0);
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -529,6 +550,7 @@ export function Timeline({
   const [winH, setWinH] = useState(800);
   const [globalRotation, setGlobalRotation] = useState(0);
   const [scaleBlend, setScaleBlend] = useState(SCALE_INDEX[timelineScale]);
+  const isDay = theme === "day";
   const lastFocusKey = useRef<string | null>(null);
   const selectionAnchorRef = useRef<SelectionAnchor | null>(null);
   const isDragging = useRef(false);
@@ -832,19 +854,25 @@ export function Timeline({
     setScrollX((value) => Math.max(0, Math.min(value, maxScroll)));
   }, [maxScroll]);
 
+  const onFocusChangeRef = useRef(onFocusChange);
+
+  useEffect(() => {
+    onFocusChangeRef.current = onFocusChange;
+  }, [onFocusChange]);
+
   useEffect(() => {
     if (!focusedNode) {
       if (lastFocusKey.current !== null) {
         lastFocusKey.current = null;
-        onFocusChange(null);
+        onFocusChangeRef.current(null);
       }
       return;
     }
 
     if (lastFocusKey.current === focusedNode.key) return;
     lastFocusKey.current = focusedNode.key;
-    onFocusChange(focusFromNode(focusedNode));
-  }, [focusedNode, onFocusChange]);
+    onFocusChangeRef.current(focusFromNode(focusedNode));
+  }, [focusedNode]);
 
   useEffect(() => {
     if (viewMode !== "timeline") return;
@@ -869,8 +897,8 @@ export function Timeline({
   }, [stepFocus, viewMode]);
 
   useEffect(() => {
-    if (viewMode !== "timeline") onFocusChange(null);
-  }, [onFocusChange, viewMode]);
+    if (viewMode !== "timeline") onFocusChangeRef.current(null);
+  }, [viewMode]);
 
   const handleWheel = useCallback(
     (event: React.WheelEvent) => {
@@ -948,6 +976,7 @@ export function Timeline({
         events={events}
         onNodeClick={onNodeClick}
         highlightedId={highlightedId}
+        theme={theme}
       />
     );
   }
@@ -977,6 +1006,7 @@ export function Timeline({
         layout={layoutMetrics}
         winW={winW}
         winH={winH}
+        theme={theme}
       />
 
       <motion.div
@@ -985,23 +1015,33 @@ export function Timeline({
         transition={{ duration: 0.45, ease: "easeOut" }}
         className="pointer-events-auto absolute left-5 right-5 top-[96px] z-40 md:left-6 md:right-[330px] 2xl:right-[360px]"
       >
-        <div className="flex flex-col gap-3 rounded-[28px] border border-white/[0.08] bg-[#050711]/72 p-3 shadow-[0_22px_80px_rgba(0,0,0,0.38)] backdrop-blur-2xl lg:flex-row lg:items-center lg:justify-between lg:p-4">
+        <div className={`flex flex-col gap-3 rounded-[28px] border p-3 backdrop-blur-2xl lg:flex-row lg:items-center lg:justify-between lg:p-4 ${
+          isDay
+            ? "border-cosmos-border/55 bg-cosmos-card/88 shadow-[0_16px_46px_rgba(84,75,62,0.09)]"
+            : "border-cosmos-border/35 bg-cosmos-surface/72 shadow-[0_0_42px_rgba(255,255,255,0.08)]"
+        }`}>
           <div className="min-w-0">
             <div className="flex items-center gap-3">
-              <span className="rounded-full border border-cosmos-gold/20 bg-cosmos-gold/10 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.24em] text-cosmos-gold">
+              <span className="rounded-full border border-cosmos-gold/20 bg-cosmos-gold/10 px-3 py-1 font-display text-[10px] uppercase tracking-[0.18em] text-cosmos-gold">
                 {meta.code}
               </span>
               <span className="hidden h-px w-16 bg-gradient-to-r from-cosmos-gold/50 to-transparent md:block" />
             </div>
-            <h2 className="mt-2 font-display text-2xl leading-none tracking-[-0.04em] aurora-text md:text-3xl">
+            <h2 className={`mt-2 font-display text-2xl font-semibold leading-tight tracking-[-0.03em] md:text-3xl ${
+              isDay ? "text-cosmos-text" : "aurora-text"
+            }`}>
               {meta.title}
             </h2>
-            <p className="mt-1 max-w-2xl text-xs leading-5 text-cosmos-text-dim md:text-sm md:leading-6">
+            <p className="mt-1 max-w-2xl font-display text-xs leading-5 tracking-wide text-cosmos-text-dim md:text-sm md:leading-6">
               {meta.subtitle}
             </p>
           </div>
 
-          <div className="grid shrink-0 grid-cols-3 gap-2 rounded-[24px] border border-white/[0.08] bg-black/28 p-1.5 shadow-[inset_0_0_24px_rgba(255,255,255,0.03)]">
+          <div className={`grid shrink-0 grid-cols-3 gap-2 rounded-[24px] border p-1.5 ${
+            isDay
+              ? "border-cosmos-border/50 bg-white/78 shadow-[inset_0_0_18px_rgba(90,80,64,0.06)]"
+              : "border-cosmos-border/35 bg-cosmos-card/60 shadow-[inset_0_0_24px_rgba(255,255,255,0.03)]"
+          }`}>
             {scaleOptions.map((option) => {
               const active = option.key === timelineScale;
               return (
@@ -1013,16 +1053,16 @@ export function Timeline({
                   className={`group relative overflow-hidden rounded-[18px] px-3 py-3 text-center transition-all duration-300 md:min-w-[118px] ${
                     active
                       ? "bg-cosmos-gold/16 text-cosmos-gold shadow-[0_0_32px_rgba(212,168,83,0.18)]"
-                      : "text-cosmos-text-dim hover:bg-white/[0.06] hover:text-cosmos-text"
+                      : "text-cosmos-text-dim hover:bg-cosmos-surface/60 hover:text-cosmos-text"
                   }`}
                 >
                   <span
                     className={`absolute inset-x-3 top-0 h-px bg-gradient-to-r from-transparent via-cosmos-gold/70 to-transparent transition-opacity ${active ? "opacity-100" : "opacity-0 group-hover:opacity-70"}`}
                   />
-                  <span className="relative block font-mono text-[10px] uppercase tracking-[0.2em]">
+                  <span className="relative block font-display text-[10px] uppercase tracking-[0.16em]">
                     {option.code}
                   </span>
-                  <span className="relative mt-1 block whitespace-nowrap text-xs tracking-wider">
+                  <span className="relative mt-1 block whitespace-nowrap font-display text-xs tracking-wider">
                     {option.label}
                   </span>
                 </button>
@@ -1036,11 +1076,17 @@ export function Timeline({
         className="pointer-events-none absolute inset-0 overflow-hidden"
         style={{ perspective: 1100 }}
       >
-        <div className="absolute bottom-0 left-0 top-[170px] z-[70] w-[18vw] bg-gradient-to-r from-[#03040a] via-[#03040a]/45 to-transparent" />
-        <div className="absolute bottom-0 right-0 top-[170px] z-[70] w-[18vw] bg-gradient-to-l from-[#03040a] via-[#03040a]/45 to-transparent" />
-        <div className="absolute left-1/2 top-[18vh] z-30 h-[70vh] w-px -translate-x-1/2 bg-gradient-to-b from-transparent via-cosmos-gold/40 to-transparent shadow-[0_0_14px_rgba(240,192,96,0.35)]" />
+        <div className="absolute bottom-0 left-0 top-[170px] z-[70] w-[18vw] bg-gradient-to-r from-cosmos-bg via-cosmos-bg/45 to-transparent" />
+        <div className="absolute bottom-0 right-0 top-[170px] z-[70] w-[18vw] bg-gradient-to-l from-cosmos-bg via-cosmos-bg/45 to-transparent" />
+        <div className={`absolute left-1/2 top-[18vh] z-30 h-[70vh] w-px -translate-x-1/2 bg-gradient-to-b from-transparent via-cosmos-gold/40 to-transparent ${
+          isDay ? "shadow-none" : "shadow-[0_0_14px_rgba(240,192,96,0.35)]"
+        }`} />
         <div
-          className="absolute left-1/2 z-30 h-24 w-[220px] -translate-x-1/2 -translate-y-1/2 bg-[radial-gradient(ellipse_at_center,rgba(255,238,190,0.42)_0%,rgba(240,192,96,0.14)_24%,rgba(91,141,239,0.07)_48%,transparent_72%)] blur-sm"
+          className={`absolute left-1/2 z-30 h-24 w-[220px] -translate-x-1/2 -translate-y-1/2 ${
+            isDay
+              ? "bg-[radial-gradient(ellipse_at_center,rgba(166,128,69,0.08)_0%,rgba(104,145,210,0.035)_36%,transparent_72%)]"
+              : "bg-[radial-gradient(ellipse_at_center,rgba(255,238,190,0.42)_0%,rgba(240,192,96,0.14)_24%,rgba(91,141,239,0.07)_48%,transparent_72%)] blur-sm"
+          }`}
           style={{ top: axisY }}
         />
 
@@ -1101,7 +1147,10 @@ export function Timeline({
                 pointerEvents: interactive ? "auto" : "none",
                 zIndex: Math.round(20 + depth * 60 + (isFocused ? 90 : 0)),
                 transform: `translate(-50%, -50%) translateZ(${renderZ * 130}px) scale(${scale})`,
-                filter: `blur(${Math.max(0, (1 - depth) * 0.8 - (isFocused ? 1 : 0))}px)`,
+                filter: `blur(${Math.max(
+                  0,
+                  (isDay ? (1 - depth) * 0.25 : (1 - depth) * 0.8) - (isFocused ? 1 : 0),
+                )}px)`,
               }}
             >
               {hasEvents && (isFocused || isStrong) && (
@@ -1154,24 +1203,42 @@ export function Timeline({
                       : "cursor-default"
                 } ${
                   node.unit === "year"
-                    ? "border-cosmos-gold/45"
+                    ? isDay
+                      ? "border-cosmos-gold/46"
+                      : "border-cosmos-gold/45"
                     : node.unit === "month"
-                      ? "border-cosmos-blue/36"
-                      : "border-cosmos-purple/42"
+                      ? isDay
+                        ? "border-cosmos-blue/42"
+                        : "border-cosmos-blue/36"
+                      : isDay
+                        ? "border-cosmos-purple/36"
+                        : "border-cosmos-purple/42"
                 }`}
                 style={{
                   width: nodeSize,
                   height: nodeSize,
-                  background: hasEvents
-                    ? `radial-gradient(circle at 30% 24%, rgba(255,255,255,0.96) 0%, ${accent.replace("ALPHA", isMajor ? "0.9" : "0.68")} 18%, ${accent.replace("ALPHA", "0.32")} 58%, rgba(3,4,10,0.36) 100%)`
-                    : node.unit === "month"
-                      ? "radial-gradient(circle at 35% 25%, rgba(91,141,239,0.24), rgba(255,255,255,0.035) 70%)"
-                      : "rgba(255,255,255,0.055)",
-                  boxShadow: hasEvents
-                    ? isFocused || isHighlighted
-                      ? `0 0 ${nodeSize * 1.75}px ${accent.replace("ALPHA", "0.72")}, inset 0 0 ${nodeSize * 0.45}px rgba(255,255,255,0.28)`
-                      : `0 0 ${nodeSize * (isStrong ? 0.92 : 0.58)}px ${accent.replace("ALPHA", isStrong ? "0.32" : "0.18")}, inset -8px -10px ${nodeSize * 0.35}px rgba(0,0,0,0.32)`
-                    : "inset -6px -8px 14px rgba(0,0,0,0.26)",
+                  background: isDay
+                    ? hasEvents
+                      ? `radial-gradient(circle at 32% 24%, rgba(255,255,255,1) 0%, ${accent.replace("ALPHA", isMajor ? "0.72" : "0.5")} 20%, rgba(255,255,255,0.82) 55%, ${accent.replace("ALPHA", "0.22")} 100%)`
+                      : node.unit === "month"
+                        ? "radial-gradient(circle at 35% 25%, rgba(255,255,255,1), rgba(76,118,188,0.32) 58%, rgba(224,231,242,0.95) 100%)"
+                        : "radial-gradient(circle at 35% 25%, rgba(255,255,255,1), rgba(154,111,53,0.3) 58%, rgba(232,224,212,0.98) 100%)"
+                    : hasEvents
+                      ? `radial-gradient(circle at 30% 24%, rgba(255,255,255,0.96) 0%, ${accent.replace("ALPHA", isMajor ? "0.9" : "0.68")} 18%, ${accent.replace("ALPHA", "0.32")} 58%, rgba(3,4,10,0.36) 100%)`
+                      : node.unit === "month"
+                        ? "radial-gradient(circle at 35% 25%, rgba(91,141,239,0.24), rgba(255,255,255,0.035) 70%)"
+                        : "rgba(255,255,255,0.055)",
+                  boxShadow: isDay
+                    ? hasEvents
+                      ? isFocused || isHighlighted
+                        ? `0 0 ${nodeSize * 0.72}px ${accent.replace("ALPHA", "0.28")}, 0 10px 22px rgba(80,72,62,0.16), inset 0 0 ${nodeSize * 0.18}px rgba(255,255,255,0.58)`
+                        : `0 0 ${nodeSize * (isStrong ? 0.48 : 0.28)}px ${accent.replace("ALPHA", isStrong ? "0.16" : "0.08")}, 0 8px 18px rgba(80,72,62,0.14), inset 0 1px 0 rgba(255,255,255,0.56)`
+                      : "0 10px 20px rgba(80,72,62,0.2), inset 0 1px 0 rgba(255,255,255,0.78)"
+                    : hasEvents
+                      ? isFocused || isHighlighted
+                        ? `0 0 ${nodeSize * 1.75}px ${accent.replace("ALPHA", "0.72")}, inset 0 0 ${nodeSize * 0.45}px rgba(255,255,255,0.28)`
+                        : `0 0 ${nodeSize * (isStrong ? 0.92 : 0.58)}px ${accent.replace("ALPHA", isStrong ? "0.32" : "0.18")}, inset -8px -10px ${nodeSize * 0.35}px rgba(0,0,0,0.32)`
+                      : "inset -6px -8px 14px rgba(0,0,0,0.26)",
                 }}
               >
                 {hasEvents && (
@@ -1186,16 +1253,39 @@ export function Timeline({
                 {showLabelCard ? (
                   <div
                     className={`rounded-2xl border px-3 py-2 text-center backdrop-blur-xl transition-all duration-300 ${
-                      isFocused
-                        ? "border-cosmos-gold/34 bg-[#0a0b17]/76 shadow-[0_18px_54px_rgba(212,168,83,0.18)]"
-                        : hasEvents
-                          ? "border-white/[0.07] bg-[#080a16]/54 shadow-[0_14px_38px_rgba(0,0,0,0.28)]"
-                          : "border-white/[0.035] bg-white/[0.018]"
+                      isDay
+                        ? isFocused
+                          ? "border-cosmos-gold/38 bg-white/92 shadow-[0_18px_42px_rgba(95,76,45,0.22)]"
+                          : hasEvents
+                            ? "border-cosmos-border/48 bg-white/86 shadow-[0_14px_34px_rgba(80,72,62,0.18)]"
+                            : "border-cosmos-border/34 bg-white/64 shadow-[0_10px_24px_rgba(80,72,62,0.1)]"
+                        : isFocused
+                          ? "border-cosmos-gold/40 shadow-[0_20px_58px_rgba(0,0,0,0.62),0_0_40px_rgba(212,168,83,0.14),inset_0_1px_0_rgba(255,255,255,0.1)]"
+                          : hasEvents
+                            ? "border-cosmos-border/32 shadow-[0_14px_40px_rgba(0,0,0,0.42),inset_0_1px_0_rgba(255,255,255,0.06)]"
+                            : "border-cosmos-border/22 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
                     }`}
+                    style={
+                      isDay
+                        ? undefined
+                        : {
+                            backgroundColor: isFocused
+                              ? "rgba(10, 13, 31, 0.96)"
+                              : hasEvents
+                                ? "rgba(7, 10, 24, 0.88)"
+                                : "rgba(6, 8, 18, 0.72)",
+                          }
+                    }
                   >
                     <div className="flex items-center justify-center gap-2">
                       <span
-                        className={`font-mono leading-none ${node.unit === "year" ? "text-lg" : node.unit === "month" ? "text-sm" : "text-[11px]"} ${hasEvents || node.unit === "year" ? "text-cosmos-text" : "text-cosmos-text-dim/45"}`}
+                        className={`font-mono leading-none ${node.unit === "year" ? "text-lg" : node.unit === "month" ? "text-sm" : "text-[11px]"} ${
+                          hasEvents || node.unit === "year"
+                            ? "text-cosmos-text"
+                            : isDay
+                              ? "text-cosmos-text-dim/70"
+                              : "text-cosmos-text-dim/45"
+                        }`}
                       >
                         {node.label}
                       </span>
@@ -1211,7 +1301,7 @@ export function Timeline({
                       </p>
                     )}
                     {hasEvents && (
-                      <div className="mt-2 h-0.5 overflow-hidden rounded-full bg-white/[0.08]">
+                      <div className="mt-2 h-0.5 overflow-hidden rounded-full bg-cosmos-surface/65">
                         <div
                           className="h-full rounded-full bg-gradient-to-r from-cosmos-blue via-cosmos-gold to-cosmos-accent"
                           style={{ width: `${node.maxImpact}%` }}
@@ -1237,7 +1327,7 @@ export function Timeline({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.96 }}
             transition={{ duration: 0.18 }}
-            className="pointer-events-none fixed z-50 w-[300px] max-w-[calc(100vw-32px)] rounded-3xl border border-white/[0.09] bg-[#070914]/88 p-4 shadow-[0_24px_90px_rgba(0,0,0,0.58)] backdrop-blur-2xl"
+            className="pointer-events-none fixed z-50 w-[300px] max-w-[calc(100vw-32px)] rounded-3xl border border-white/[0.09] bg-cosmos-surface/90 p-4 shadow-[0_24px_90px_rgba(0,0,0,0.58)] backdrop-blur-2xl"
             style={{
               left: Math.max(16, Math.min(tooltipPos.x - 150, winW - 316)),
               top: Math.max(100, Math.min(tooltipPos.y, winH - 230)),
@@ -1247,7 +1337,7 @@ export function Timeline({
               <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-cosmos-gold">
                 {unitCopy[hoveredNode.unit]} · {hoveredNode.label}
               </p>
-              <span className="rounded-full bg-white/[0.06] px-2 py-0.5 font-mono text-[10px] text-cosmos-text-dim">
+              <span className="rounded-full bg-cosmos-surface/60 px-2 py-0.5 font-mono text-[10px] text-cosmos-text-dim">
                 {hoveredNode.eventCount} Events
               </span>
             </div>
@@ -1256,7 +1346,7 @@ export function Timeline({
                 hoveredNode.events.slice(0, 3).map((event) => (
                   <div
                     key={event.id}
-                    className="rounded-2xl bg-white/[0.04] px-3 py-2"
+                    className="rounded-2xl bg-cosmos-surface/55 px-3 py-2"
                   >
                     <p className="truncate text-xs text-cosmos-text">
                       {event.title}
@@ -1267,7 +1357,7 @@ export function Timeline({
                   </div>
                 ))
               ) : (
-                <p className="rounded-2xl bg-white/[0.04] px-3 py-2 text-xs text-cosmos-text-dim">
+                <p className="rounded-2xl bg-cosmos-surface/55 px-3 py-2 text-xs text-cosmos-text-dim">
                   当前星球暂无事件
                 </p>
               )}

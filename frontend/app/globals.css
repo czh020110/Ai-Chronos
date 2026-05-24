@@ -1,26 +1,41 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;1,8..60,400&family=JetBrains+Mono:wght@300;400;500&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=LXGW+WenKai+Screen&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --color-bg: #03040a;
-  --color-surface: #090b18;
-  --color-card: #101326;
-  --color-border: #232842;
-  --color-gold: #d4a853;
-  --color-gold-dim: #8b7340;
-  --color-blue: #5b8def;
-  --color-blue-dim: #3a5a9f;
-  --color-purple: #8b5cf6;
-  --color-purple-dim: #5a3a9f;
-  --color-text: #eceaf7;
-  --color-text-dim: #8589a9;
-  --color-accent: #f0c060;
-  --color-success: #4ade80;
-  --color-warning: #f59e0b;
-  --color-error: #ef4444;
+  color-scheme: dark;
+  --cosmos-bg: 3 4 10;
+  --cosmos-surface: 9 11 24;
+  --cosmos-card: 16 19 38;
+  --cosmos-border: 35 40 66;
+  --cosmos-gold: 212 168 83;
+  --cosmos-gold-dim: 139 115 64;
+  --cosmos-blue: 91 141 239;
+  --cosmos-blue-dim: 58 90 159;
+  --cosmos-purple: 139 92 246;
+  --cosmos-purple-dim: 90 58 159;
+  --cosmos-text: 236 234 247;
+  --cosmos-text-dim: 133 137 169;
+  --cosmos-accent: 240 192 96;
+}
+
+html[data-theme="day"] {
+  color-scheme: light;
+  --cosmos-bg: 238 236 230;
+  --cosmos-surface: 249 247 242;
+  --cosmos-card: 255 254 250;
+  --cosmos-border: 185 177 164;
+  --cosmos-gold: 154 111 53;
+  --cosmos-gold-dim: 111 83 45;
+  --cosmos-blue: 76 118 188;
+  --cosmos-blue-dim: 58 93 154;
+  --cosmos-purple: 128 118 178;
+  --cosmos-purple-dim: 102 93 148;
+  --cosmos-text: 38 34 29;
+  --cosmos-text-dim: 82 75 65;
+  --cosmos-accent: 142 96 45;
 }
 
 * {
@@ -34,14 +49,21 @@ body {
   overflow: hidden;
   height: 100%;
   background:
-    radial-gradient(circle at 18% 14%, rgba(91, 141, 239, 0.12), transparent 30%),
-    radial-gradient(circle at 74% 22%, rgba(212, 168, 83, 0.12), transparent 32%),
-    radial-gradient(circle at 52% 82%, rgba(139, 92, 246, 0.11), transparent 36%),
-    var(--color-bg);
-  color: var(--color-text);
-  font-family: 'DM Sans', system-ui, sans-serif;
+    radial-gradient(circle at 18% 14%, rgb(var(--cosmos-blue) / 0.12), transparent 30%),
+    radial-gradient(circle at 74% 22%, rgb(var(--cosmos-gold) / 0.11), transparent 32%),
+    radial-gradient(circle at 52% 82%, rgb(var(--cosmos-purple) / 0.1), transparent 36%),
+    rgb(var(--cosmos-bg));
+  color: rgb(var(--cosmos-text));
+  font-family: 'LXGW WenKai Screen', serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+html[data-theme="day"] body {
+  background:
+    radial-gradient(circle at 20% 12%, rgb(var(--cosmos-blue) / 0.06), transparent 28%),
+    radial-gradient(circle at 80% 16%, rgb(var(--cosmos-gold) / 0.035), transparent 26%),
+    linear-gradient(180deg, rgb(249 247 242) 0%, rgb(242 240 235) 52%, rgb(232 229 222) 100%);
 }
 
 button,
@@ -60,54 +82,156 @@ input {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(133, 137, 169, 0.22);
+  background: rgb(var(--cosmos-text-dim) / 0.24);
   border-radius: 999px;
 }
 
+html[data-theme="day"] ::-webkit-scrollbar-thumb {
+  background: rgb(123 109 88 / 0.24);
+}
+
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(212, 168, 83, 0.45);
+  background: rgb(var(--cosmos-gold) / 0.42);
 }
 
 ::selection {
-  background: rgba(212, 168, 83, 0.28);
-  color: var(--color-accent);
+  background: rgb(var(--cosmos-gold) / 0.28);
+  color: rgb(var(--cosmos-accent));
 }
 
 @layer components {
+  .chronos-stage {
+    position: relative;
+    background: rgb(var(--cosmos-bg));
+    color: rgb(var(--cosmos-text));
+  }
+
+  .chronos-vignette {
+    background: radial-gradient(
+      circle at 50% 48%,
+      transparent 0%,
+      rgb(var(--cosmos-bg) / 0.18) 40%,
+      rgb(var(--cosmos-bg) / 0.9) 100%
+    );
+  }
+
+  html[data-theme="day"] .chronos-vignette {
+    background: radial-gradient(
+      circle at 50% 42%,
+      transparent 0%,
+      rgb(238 236 230 / 0.04) 46%,
+      rgb(196 188 174 / 0.2) 100%
+    );
+  }
+
+  .chronos-grid-overlay {
+    opacity: 0.16;
+    background-image:
+      linear-gradient(rgb(var(--cosmos-text) / 0.08) 1px, transparent 1px),
+      linear-gradient(90deg, rgb(var(--cosmos-text) / 0.08) 1px, transparent 1px);
+    background-size: 80px 80px;
+    mask-image: radial-gradient(circle at center, #000 0%, transparent 76%);
+  }
+
+  html[data-theme="day"] .chronos-grid-overlay {
+    opacity: 0.16;
+    background-image:
+      linear-gradient(rgb(92 83 70 / 0.08) 1px, transparent 1px),
+      linear-gradient(90deg, rgb(var(--cosmos-blue) / 0.09) 1px, transparent 1px);
+  }
+
+  .theme-shell,
+  .theme-shell-strong {
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(24px) saturate(145%);
+    border: 1px solid rgb(255 255 255 / 0.08);
+    background:
+      linear-gradient(145deg, rgb(15 18 35 / 0.78), rgb(5 7 17 / 0.72)),
+      radial-gradient(circle at 12% 8%, rgb(var(--cosmos-gold) / 0.12), transparent 32%),
+      radial-gradient(circle at 88% 16%, rgb(var(--cosmos-blue) / 0.1), transparent 36%);
+    box-shadow:
+      0 28px 90px rgb(0 0 0 / 0.5),
+      inset 0 1px 0 rgb(255 255 255 / 0.07),
+      inset 0 -1px 0 rgb(255 255 255 / 0.03);
+  }
+
+  html[data-theme="day"] .theme-shell,
+  html[data-theme="day"] .theme-shell-strong {
+    border-color: rgb(130 112 82 / 0.12);
+    background:
+      linear-gradient(145deg, rgb(255 255 252 / 0.94), rgb(246 243 236 / 0.86)),
+      radial-gradient(circle at 14% 10%, rgb(var(--cosmos-blue) / 0.08), transparent 30%),
+      radial-gradient(circle at 88% 16%, rgb(var(--cosmos-gold) / 0.06), transparent 34%);
+    box-shadow:
+      0 24px 88px rgb(94 76 41 / 0.1),
+      inset 0 1px 0 rgb(255 255 255 / 0.84),
+      inset 0 -1px 0 rgb(120 98 55 / 0.04);
+  }
+
+  .theme-shell-strong {
+    border-radius: 32px;
+    box-shadow:
+      0 32px 120px rgb(0 0 0 / 0.62),
+      inset 0 1px 0 rgb(255 255 255 / 0.07),
+      inset 0 -1px 0 rgb(255 255 255 / 0.03);
+  }
+
+  html[data-theme="day"] .theme-shell-strong {
+    box-shadow:
+      0 32px 110px rgb(94 76 41 / 0.16),
+      inset 0 1px 0 rgb(255 255 255 / 0.84),
+      inset 0 -1px 0 rgb(120 98 55 / 0.05);
+  }
+
+  .theme-chip {
+    border: 1px solid rgb(255 255 255 / 0.08);
+    background: rgb(255 255 255 / 0.045);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.05);
+    backdrop-filter: blur(16px);
+  }
+
+  html[data-theme="day"] .theme-chip {
+    border-color: rgb(130 112 82 / 0.1);
+    background: rgb(255 255 255 / 0.68);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.82);
+  }
+
   .glass-card {
     background:
-      linear-gradient(145deg, rgba(20, 24, 46, 0.78), rgba(7, 8, 18, 0.62)),
-      radial-gradient(circle at 18% 0%, rgba(212, 168, 83, 0.12), transparent 34%);
+      linear-gradient(145deg, rgb(20 24 46 / 0.78), rgb(7 8 18 / 0.62)),
+      radial-gradient(circle at 18% 0%, rgb(var(--cosmos-gold) / 0.12), transparent 34%);
     backdrop-filter: blur(22px) saturate(140%);
-    border: 1px solid rgba(236, 234, 247, 0.08);
+    border: 1px solid rgb(236 234 247 / 0.08);
     border-radius: 18px;
     box-shadow:
-      0 24px 80px rgba(0, 0, 0, 0.48),
-      inset 0 1px 0 rgba(255, 255, 255, 0.06);
+      0 24px 80px rgb(0 0 0 / 0.48),
+      inset 0 1px 0 rgb(255 255 255 / 0.06);
   }
 
   .glass-card-light {
-    background: linear-gradient(135deg, rgba(18, 22, 42, 0.58), rgba(8, 10, 22, 0.38));
+    background: linear-gradient(135deg, rgb(18 22 42 / 0.58), rgb(8 10 22 / 0.38));
     backdrop-filter: blur(18px) saturate(135%);
-    border: 1px solid rgba(236, 234, 247, 0.07);
+    border: 1px solid rgb(236 234 247 / 0.07);
     border-radius: 14px;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.05);
   }
 
   .chronos-panel {
     position: relative;
     overflow: hidden;
-    border: 1px solid rgba(236, 234, 247, 0.09);
+    border: 1px solid rgb(236 234 247 / 0.09);
     border-radius: 24px;
     background:
-      linear-gradient(145deg, rgba(15, 18, 35, 0.78), rgba(5, 7, 17, 0.72)),
-      radial-gradient(circle at 12% 8%, rgba(240, 192, 96, 0.14), transparent 32%),
-      radial-gradient(circle at 88% 16%, rgba(91, 141, 239, 0.12), transparent 36%);
+      linear-gradient(145deg, rgb(15 18 35 / 0.78), rgb(5 7 17 / 0.72)),
+      radial-gradient(circle at 12% 8%, rgb(var(--cosmos-gold) / 0.14), transparent 32%),
+      radial-gradient(circle at 88% 16%, rgb(var(--cosmos-blue) / 0.12), transparent 36%);
     backdrop-filter: blur(26px) saturate(145%);
     box-shadow:
-      0 28px 90px rgba(0, 0, 0, 0.52),
-      inset 0 1px 0 rgba(255, 255, 255, 0.07),
-      inset 0 -1px 0 rgba(255, 255, 255, 0.03);
+      0 0 52px rgb(255 255 255 / 0.08),
+      0 18px 62px rgb(255 255 255 / 0.035),
+      inset 0 1px 0 rgb(255 255 255 / 0.07),
+      inset 0 -1px 0 rgb(255 255 255 / 0.03);
   }
 
   .chronos-panel::before {
@@ -116,53 +240,120 @@ input {
     inset: 0;
     pointer-events: none;
     background:
-      linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent),
-      repeating-linear-gradient(135deg, rgba(255,255,255,0.025) 0 1px, transparent 1px 16px);
+      linear-gradient(90deg, transparent, rgb(255 255 255 / 0.05), transparent),
+      repeating-linear-gradient(135deg, rgb(255 255 255 / 0.025) 0 1px, transparent 1px 16px);
     opacity: 0.48;
     mask-image: linear-gradient(180deg, #000, transparent 82%);
   }
 
+  html[data-theme="day"] .chronos-panel {
+    border-color: rgb(130 112 82 / 0.12);
+    background:
+      linear-gradient(145deg, rgb(255 255 252 / 0.96), rgb(247 244 238 / 0.9)),
+      radial-gradient(circle at 14% 8%, rgb(var(--cosmos-blue) / 0.08), transparent 30%),
+      radial-gradient(circle at 88% 18%, rgb(var(--cosmos-gold) / 0.06), transparent 34%);
+    box-shadow:
+      0 26px 88px rgb(94 76 41 / 0.1),
+      inset 0 1px 0 rgb(255 255 255 / 0.8),
+      inset 0 -1px 0 rgb(120 98 55 / 0.04);
+  }
+
+  html[data-theme="day"] .chronos-panel::before {
+    background:
+      linear-gradient(90deg, transparent, rgb(120 98 55 / 0.05), transparent),
+      repeating-linear-gradient(135deg, rgb(120 98 55 / 0.03) 0 1px, transparent 1px 18px);
+    opacity: 0.28;
+  }
+
   .chronos-panel-strong {
     background:
-      linear-gradient(150deg, rgba(28, 28, 58, 0.88), rgba(5, 6, 15, 0.9)),
-      radial-gradient(circle at 30% 0%, rgba(212, 168, 83, 0.18), transparent 34%);
-    border-color: rgba(212, 168, 83, 0.16);
+      linear-gradient(150deg, rgb(28 28 58 / 0.88), rgb(5 6 15 / 0.9)),
+      radial-gradient(circle at 30% 0%, rgb(var(--cosmos-gold) / 0.18), transparent 34%);
+    border-color: rgb(var(--cosmos-gold) / 0.16);
     box-shadow:
-      0 30px 100px rgba(0, 0, 0, 0.58),
-      0 0 70px rgba(91, 141, 239, 0.08),
-      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      0 30px 100px rgb(0 0 0 / 0.58),
+      0 0 70px rgb(var(--cosmos-blue) / 0.08),
+      inset 0 1px 0 rgb(255 255 255 / 0.08);
+  }
+
+  html[data-theme="day"] .chronos-panel-strong {
+    background:
+      linear-gradient(150deg, rgb(255 255 252 / 0.96), rgb(244 240 232 / 0.92)),
+      radial-gradient(circle at 26% 0%, rgb(var(--cosmos-gold) / 0.08), transparent 34%);
+    border-color: rgb(var(--cosmos-gold) / 0.14);
+    box-shadow:
+      0 32px 110px rgb(94 76 41 / 0.12),
+      0 0 70px rgb(var(--cosmos-blue) / 0.07),
+      inset 0 1px 0 rgb(255 255 255 / 0.84);
   }
 
   .chronos-eyebrow {
-    color: rgba(240, 192, 96, 0.82);
-    font-family: 'JetBrains Mono', Consolas, monospace;
+    color: rgb(var(--cosmos-gold) / 0.82);
+    font-family: 'LXGW WenKai Screen', serif;
     font-size: 10px;
     letter-spacing: 0.24em;
     text-transform: uppercase;
   }
 
+  html[data-theme="day"] .chronos-eyebrow {
+    color: rgb(148 114 43 / 0.82);
+  }
+
   .chronos-divider {
     height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(212, 168, 83, 0.34), rgba(91, 141, 239, 0.24), transparent);
+    background: linear-gradient(90deg, transparent, rgb(var(--cosmos-gold) / 0.34), rgb(var(--cosmos-blue) / 0.24), transparent);
+  }
+
+  html[data-theme="day"] .chronos-divider {
+    background: linear-gradient(90deg, transparent, rgb(var(--cosmos-gold) / 0.32), rgb(var(--cosmos-blue) / 0.18), transparent);
   }
 
   .chronos-metric {
-    background: linear-gradient(145deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.025));
-    border: 1px solid rgba(255, 255, 255, 0.07);
+    background: linear-gradient(145deg, rgb(255 255 255 / 0.055), rgb(255 255 255 / 0.025));
+    border: 1px solid rgb(255 255 255 / 0.07);
     border-radius: 18px;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.06);
+  }
+
+  html[data-theme="day"] .chronos-metric {
+    background: linear-gradient(145deg, rgb(255 255 255 / 0.7), rgb(246 242 234 / 0.74));
+    border-color: rgb(130 112 82 / 0.09);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.82);
   }
 
   .aurora-text {
-    background: linear-gradient(105deg, #fff7d6 0%, #d4a853 34%, #93b7ff 68%, #f3e8ff 100%);
+    background: linear-gradient(105deg, #fff7d6 0%, rgb(var(--cosmos-gold)) 34%, rgb(var(--cosmos-blue)) 68%, rgb(var(--cosmos-purple)) 100%);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
-    text-shadow: 0 0 32px rgba(212, 168, 83, 0.16);
+    text-shadow: 0 0 32px rgb(var(--cosmos-gold) / 0.16);
+  }
+
+  html[data-theme="day"] .aurora-text {
+    background: none;
+    -webkit-background-clip: initial;
+    background-clip: border-box;
+    color: rgb(var(--cosmos-text));
+    text-shadow: none;
   }
 
   .glow-text {
-    text-shadow: 0 0 28px rgba(212, 168, 83, 0.28), 0 0 52px rgba(91, 141, 239, 0.14);
+    text-shadow: 0 0 28px rgb(var(--cosmos-gold) / 0.28), 0 0 52px rgb(var(--cosmos-blue) / 0.14);
+  }
+
+  html[data-theme="day"] .glow-text {
+    text-shadow: 0 0 16px rgb(var(--cosmos-gold) / 0.12), 0 0 32px rgb(var(--cosmos-blue) / 0.06);
+  }
+
+  .chronos-title {
+    font-family: 'LXGW WenKai Screen', serif;
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    line-height: 1.08;
+  }
+
+  html[data-theme="day"] .chronos-title {
+    text-shadow: none;
   }
 
   .gradient-border {
@@ -175,45 +366,81 @@ input {
     inset: 0;
     border-radius: inherit;
     padding: 1px;
-    background: linear-gradient(135deg, rgba(212,168,83,0.52), rgba(139,92,246,0.38), rgba(91,141,239,0.44));
+    background: linear-gradient(135deg, rgb(var(--cosmos-gold) / 0.52), rgb(var(--cosmos-purple) / 0.38), rgb(var(--cosmos-blue) / 0.44));
     mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     mask-composite: exclude;
     pointer-events: none;
   }
 
   .tag-paper {
-    background: rgba(91, 141, 239, 0.15);
-    color: #9fbdff;
-    border: 1px solid rgba(91, 141, 239, 0.34);
+    background: rgb(var(--cosmos-blue) / 0.15);
+    color: rgb(159 189 255);
+    border: 1px solid rgb(var(--cosmos-blue) / 0.34);
+  }
+
+  html[data-theme="day"] .tag-paper {
+    background: rgb(var(--cosmos-blue) / 0.14);
+    color: rgb(63 100 148);
+    border-color: rgb(var(--cosmos-blue) / 0.26);
   }
 
   .tag-model {
-    background: rgba(139, 92, 246, 0.15);
-    color: #c4a8ff;
-    border: 1px solid rgba(139, 92, 246, 0.34);
+    background: rgb(var(--cosmos-purple) / 0.15);
+    color: rgb(196 168 255);
+    border: 1px solid rgb(var(--cosmos-purple) / 0.34);
+  }
+
+  html[data-theme="day"] .tag-model {
+    background: rgb(var(--cosmos-purple) / 0.14);
+    color: rgb(114 92 166);
+    border-color: rgb(var(--cosmos-purple) / 0.26);
   }
 
   .tag-news {
-    background: rgba(244, 114, 114, 0.15);
-    color: #ffaaa6;
-    border: 1px solid rgba(244, 114, 114, 0.34);
+    background: rgb(244 114 114 / 0.15);
+    color: rgb(255 170 166);
+    border: 1px solid rgb(244 114 114 / 0.34);
+  }
+
+  html[data-theme="day"] .tag-news {
+    background: rgb(244 114 114 / 0.14);
+    color: rgb(168 74 74);
+    border-color: rgb(244 114 114 / 0.26);
   }
 
   .tag-tool {
-    background: rgba(74, 222, 128, 0.14);
-    color: #91f7b6;
-    border: 1px solid rgba(74, 222, 128, 0.32);
+    background: rgb(74 222 128 / 0.14);
+    color: rgb(145 247 182);
+    border: 1px solid rgb(74 222 128 / 0.32);
+  }
+
+  html[data-theme="day"] .tag-tool {
+    background: rgb(74 222 128 / 0.14);
+    color: rgb(58 132 86);
+    border-color: rgb(74 222 128 / 0.24);
   }
 
   .tag-opensource {
-    background: rgba(240, 192, 96, 0.15);
-    color: #f5d389;
-    border: 1px solid rgba(240, 192, 96, 0.34);
+    background: rgb(var(--cosmos-gold) / 0.15);
+    color: rgb(245 211 137);
+    border: 1px solid rgb(var(--cosmos-gold) / 0.34);
+  }
+
+  html[data-theme="day"] .tag-opensource {
+    background: rgb(var(--cosmos-gold) / 0.14);
+    color: rgb(150 110 38);
+    border-color: rgb(var(--cosmos-gold) / 0.26);
   }
 
   .tag-business {
-    background: rgba(244, 158, 11, 0.15);
-    color: #ffc16a;
-    border: 1px solid rgba(244, 158, 11, 0.34);
+    background: rgb(244 158 11 / 0.15);
+    color: rgb(255 193 106);
+    border: 1px solid rgb(244 158 11 / 0.34);
+  }
+
+  html[data-theme="day"] .tag-business {
+    background: rgb(244 158 11 / 0.14);
+    color: rgb(167 109 25);
+    border-color: rgb(244 158 11 / 0.26);
   }
 }

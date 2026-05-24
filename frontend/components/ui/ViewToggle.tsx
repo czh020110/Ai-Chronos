@@ -55,7 +55,7 @@ export function ViewToggle({ viewMode, onViewChange }: ViewToggleProps) {
       transition={{ duration: 0.5, delay: 0.35 }}
       className="fixed bottom-7 right-5 z-40 md:right-7"
     >
-      <div className="flex items-center gap-1 rounded-[24px] border border-white/[0.08] bg-[#060814]/76 p-1.5 shadow-[0_18px_70px_rgba(0,0,0,0.42)] backdrop-blur-2xl md:flex-col">
+      <div className="theme-shell flex items-center gap-1 rounded-[24px] p-1.5 md:flex-col">
         {modes.map(({ key, label, shortLabel, icon }) => (
           <button
             key={key}
@@ -63,14 +63,14 @@ export function ViewToggle({ viewMode, onViewChange }: ViewToggleProps) {
             className={`group relative flex h-11 items-center justify-center gap-2 rounded-[18px] px-3 text-xs transition-all duration-300 md:w-20 md:px-2 ${
               viewMode === key
                 ? "bg-cosmos-gold/14 text-cosmos-gold shadow-[0_0_24px_rgba(212,168,83,0.12)]"
-                : "text-cosmos-text-dim hover:bg-white/[0.05] hover:text-cosmos-text"
+                : "text-cosmos-text-dim hover:bg-cosmos-surface/60 hover:text-cosmos-text"
             }`}
             title={label}
             aria-label={`切换到${label}视图`}
           >
             {icon}
             <span className="hidden whitespace-nowrap tracking-wider sm:inline md:text-[10px]">{shortLabel}</span>
-            <span className="pointer-events-none absolute right-[calc(100%+10px)] top-1/2 hidden -translate-y-1/2 whitespace-nowrap rounded-full border border-white/[0.08] bg-[#070914]/90 px-3 py-1.5 text-[10px] tracking-wider text-cosmos-text-dim opacity-0 shadow-xl backdrop-blur-xl transition-opacity group-hover:opacity-100 md:block">
+            <span className="pointer-events-none absolute right-[calc(100%+10px)] top-1/2 hidden -translate-y-1/2 whitespace-nowrap rounded-full border border-cosmos-border/30 bg-cosmos-card/90 px-3 py-1.5 text-[10px] tracking-wider text-cosmos-text-dim opacity-0 shadow-xl backdrop-blur-xl transition-opacity group-hover:opacity-100 md:block">
               {label}
             </span>
           </button>

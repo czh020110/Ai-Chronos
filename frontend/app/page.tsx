@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import { sampleEvents } from "@/lib/data";
-import { AIEvent, TimelineFocus, TimelineScale, ViewMode } from "@/lib/types";
+import { AIEvent, ThemeMode, TimelineFocus, TimelineScale, ViewMode } from "@/lib/types";
 import { StarField } from "@/components/background/StarField";
 import { NavBar } from "@/components/navigation/NavBar";
 import { Timeline } from "@/components/timeline/Timeline";
@@ -26,6 +26,8 @@ export default function Home() {
   const [viewMode, setViewMode] = useState<ViewMode>("timeline");
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
   const [timelineFocus, setTimelineFocus] = useState<TimelineFocus | null>(null);
+  const [theme, setTheme] = useState<ThemeMode>("night");
+  const [themeReady, setThemeReady] = useState(false);
 
   const stats = useMemo(() => {
     const years = events.map((event) => new Date(event.event_date).getFullYear());
@@ -61,6 +63,10 @@ export default function Home() {
     setDrawerOpen(false);
   }, []);
 
+  const handleThemeToggle = useCallback(() => {
+    setTheme((prev) => (prev === "night" ? "day" : "night"));
+  }, []);
+
   const handleSearchSelect = useCallback((event: AIEvent) => {
     setSelectedEvent(event);
     setDrawerOpen(true);
@@ -68,6 +74,22 @@ export default function Home() {
     setSearchOpen(false);
     setTimeout(() => setHighlightedId(null), 3000);
   }, []);
+
+  useEffect(() => {
+    const storedTheme = window.localStorage.getItem("ai-chronos-theme");
+    if (storedTheme === "night" || storedTheme === "day") {
+      setTheme(storedTheme);
+    }
+    setThemeReady(true);
+  }, []);
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    document.documentElement.style.colorScheme = theme === "day" ? "light" : "dark";
+    if (themeReady) {
+      window.localStorage.setItem("ai-chronos-theme", theme);
+    }
+  }, [theme, themeReady]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -81,12 +103,17 @@ export default function Home() {
   }, []);
 
   return (
-    <main className="relative h-screen w-full overflow-hidden bg-[#03040a] text-cosmos-text">
-      <StarField />
-      <div className="pointer-events-none fixed inset-0 z-[1] bg-[radial-gradient(circle_at_50%_48%,transparent_0%,rgba(3,4,10,0.18)_38%,rgba(3,4,10,0.88)_100%)]" />
-      <div className="pointer-events-none fixed inset-0 z-[1] opacity-[0.16] [background-image:linear-gradient(rgba(255,255,255,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.08)_1px,transparent_1px)] [background-size:80px_80px] [mask-image:radial-gradient(circle_at_center,#000_0%,transparent_76%)]" />
+    <main className="chronos-stage relative h-screen w-full overflow-hidden">
+      <StarField theme={theme} />
+      <div className="chronos-vignette pointer-events-none fixed inset-0 z-[1]" />
+      <div className="chronos-grid-overlay pointer-events-none fixed inset-0 z-[1]" />
 
-      <NavBar onSearchOpen={() => setSearchOpen(true)} stats={stats} />
+      <NavBar
+        onSearchOpen={() => setSearchOpen(true)}
+        onThemeToggle={handleThemeToggle}
+        stats={stats}
+        theme={theme}
+      />
 
       <motion.aside
         initial={{ opacity: 0, x: 24 }}
@@ -101,7 +128,7 @@ export default function Home() {
               {timelineFocus ? scaleCopy[timelineScale] : "SCANNING"}
             </span>
           </div>
-          <h2 className="mt-4 font-display text-xl text-cosmos-text glow-text">
+          <h2 className="mt-4 chronos-title text-xl text-cosmos-text glow-text">
             {timelineFocus ? `${timelineFocus.unitLabel} · ${timelineFocus.label}` : activeCoordinate}
           </h2>
           <p className="mt-3 text-xs leading-6 text-cosmos-text-dim">
@@ -115,7 +142,7 @@ export default function Home() {
             <p className="mt-2 text-sm leading-6 text-cosmos-text/86">
               {timelineFocus?.events[0]?.title ?? stats.topEvent.title}
             </p>
-            <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-white/8">
+            <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-cosmos-surface/60">
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${timelineFocus?.maxImpact ?? stats.topEvent.impact_score}%` }}
@@ -135,6 +162,7 @@ export default function Home() {
         onFocusChange={setTimelineFocus}
         onNodeClick={handleNodeClick}
         highlightedId={highlightedId}
+        theme={theme}
       />
 
       <DetailDrawer

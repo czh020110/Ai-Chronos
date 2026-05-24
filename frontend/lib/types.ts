@@ -17,6 +17,7 @@ export type ZoomLevel = "year" | "month" | "day";
 export type TimelineScale = "year" | "month" | "day";
 export type TimelineUnit = "year" | "month" | "day";
 export type ViewMode = "timeline" | "grid" | "list";
+export type ThemeMode = "night" | "day";
 
 export interface TimelineFocus {
   key: string;

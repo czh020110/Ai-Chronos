@@ -66,7 +66,7 @@ export function SearchPanel({ events, isOpen, onClose, onSelect }: SearchPanelPr
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-[#03040a]/72 backdrop-blur-[7px]"
+            className="fixed inset-0 z-50 bg-cosmos-bg/72 backdrop-blur-[7px]"
             onClick={onClose}
           />
 
@@ -77,10 +77,10 @@ export function SearchPanel({ events, isOpen, onClose, onSelect }: SearchPanelPr
             transition={{ duration: 0.24, ease: "easeOut" }}
             className="fixed left-1/2 top-24 z-50 w-full max-w-2xl -translate-x-1/2 px-4"
           >
-            <div className="relative overflow-hidden rounded-[32px] border border-white/[0.1] bg-[#070914]/90 shadow-[0_32px_120px_rgba(0,0,0,0.62)] backdrop-blur-2xl">
+            <div className="theme-shell-strong relative overflow-hidden rounded-[32px]">
               <div className="pointer-events-none absolute -left-24 -top-24 h-56 w-56 rounded-full bg-cosmos-blue/14 blur-3xl" />
               <div className="pointer-events-none absolute -right-20 top-10 h-48 w-48 rounded-full bg-cosmos-gold/12 blur-3xl" />
-              <div className="relative z-10 flex items-center gap-4 border-b border-white/[0.08] px-5 py-5 md:px-6">
+              <div className="relative z-10 flex items-center gap-4 border-b border-cosmos-border/30 px-5 py-5 md:px-6">
                 <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-cosmos-gold/20 bg-cosmos-gold/10 text-cosmos-gold">
                   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                     <circle cx="11" cy="11" r="8" />
@@ -101,7 +101,7 @@ export function SearchPanel({ events, isOpen, onClose, onSelect }: SearchPanelPr
                     className="w-full bg-transparent text-base text-cosmos-text placeholder:text-cosmos-text-dim/55 outline-none"
                   />
                 </div>
-                <kbd className="rounded-full border border-white/[0.08] bg-white/[0.04] px-2.5 py-1 font-mono text-[10px] text-cosmos-text-dim">
+                <kbd className="rounded-full border border-cosmos-border/30 bg-cosmos-card/70 px-2.5 py-1 font-mono text-[10px] text-cosmos-text-dim">
                   ESC
                 </kbd>
               </div>
@@ -122,7 +122,7 @@ export function SearchPanel({ events, isOpen, onClose, onSelect }: SearchPanelPr
                           className={`group mb-2 grid w-full grid-cols-[1fr_auto] gap-4 rounded-3xl border px-4 py-4 text-left transition-all duration-180 last:mb-0 ${
                             idx === selectedIdx
                               ? "border-cosmos-gold/30 bg-cosmos-gold/10 shadow-[0_0_38px_rgba(212,168,83,0.1)]"
-                              : "border-white/[0.055] bg-white/[0.03] hover:border-white/[0.1] hover:bg-white/[0.05]"
+                              : "border-cosmos-border/25 bg-cosmos-surface/55 hover:border-cosmos-border/35 hover:bg-cosmos-surface/70"
                           }`}
                         >
                           <div className="min-w-0">
@@ -134,7 +134,7 @@ export function SearchPanel({ events, isOpen, onClose, onSelect }: SearchPanelPr
                                 {format(parseISO(event.event_date), "yyyy.MM.dd")}
                               </span>
                               {event.tags.map((tag) => (
-                                <span key={tag} className={`rounded-full px-2 py-0.5 text-[9px] ${tagClass[tag] || "border border-white/10 bg-white/5 text-cosmos-text-dim"}`}>
+                                <span key={tag} className={`rounded-full px-2 py-0.5 text-[9px] ${tagClass[tag] || "border border-cosmos-border/25 bg-cosmos-surface/55 text-cosmos-text-dim"}`}>
                                   {tag}
                                 </span>
                               ))}
@@ -143,7 +143,7 @@ export function SearchPanel({ events, isOpen, onClose, onSelect }: SearchPanelPr
                           <span className={`mt-1 h-fit rounded-full px-2.5 py-1 font-mono text-[10px] ${
                             event.impact_score >= 90
                               ? "bg-cosmos-gold/14 text-cosmos-gold"
-                              : "bg-white/[0.055] text-cosmos-text-dim"
+                              : "bg-cosmos-surface/60 text-cosmos-text-dim"
                           }`}>
                             {event.impact_score}
                           </span>
@@ -161,7 +161,7 @@ export function SearchPanel({ events, isOpen, onClose, onSelect }: SearchPanelPr
                         <button
                           key={hint}
                           onClick={() => setQuery(hint)}
-                          className="rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1.5 text-xs text-cosmos-text-dim transition-all hover:border-cosmos-gold/25 hover:bg-cosmos-gold/10 hover:text-cosmos-gold"
+                          className="rounded-full border border-cosmos-border/30 bg-cosmos-surface/60 px-3 py-1.5 text-xs text-cosmos-text-dim transition-all hover:border-cosmos-gold/25 hover:bg-cosmos-gold/10 hover:text-cosmos-gold"
                         >
                           {hint}
                         </button>
