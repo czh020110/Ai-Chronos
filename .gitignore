@@ -9,6 +9,7 @@
 !.vscode/tasks.json
 !.vscode/launch.json
 .idea/
+.playwright-mcp/
 
 # Python cache
 __pycache__/
@@ -57,6 +58,7 @@ redis-data/
 frontend/node_modules/
 frontend/.next/
 frontend/next-env.d.ts
+*.tsbuildinfo
 package-lock.json
 # Environment files
 .env

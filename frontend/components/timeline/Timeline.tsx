@@ -917,26 +917,6 @@ export function Timeline({
     [onNodeClick, selectNode],
   );
 
-  if (viewMode === "grid") {
-    return (
-      <GridView
-        events={events}
-        onNodeClick={onNodeClick}
-        highlightedId={highlightedId}
-      />
-    );
-  }
-
-  if (viewMode === "list") {
-    return (
-      <ListView
-        events={events}
-        onNodeClick={onNodeClick}
-        highlightedId={highlightedId}
-      />
-    );
-  }
-
   const meta =
     scaleOptions.find((option) => option.key === timelineScale) ??
     scaleOptions[1];
@@ -961,6 +941,26 @@ export function Timeline({
       )
       .sort((a, b) => a.renderZ - b.renderZ);
   }, [allNodes, globalRotation, layoutMetrics, leftPad, scrollX, winW]);
+
+  if (viewMode === "grid") {
+    return (
+      <GridView
+        events={events}
+        onNodeClick={onNodeClick}
+        highlightedId={highlightedId}
+      />
+    );
+  }
+
+  if (viewMode === "list") {
+    return (
+      <ListView
+        events={events}
+        onNodeClick={onNodeClick}
+        highlightedId={highlightedId}
+      />
+    );
+  }
 
   return (
     <div
