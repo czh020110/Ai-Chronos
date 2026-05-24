@@ -2,7 +2,13 @@
 
 import { useRef, useEffect, useCallback, useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { AIEvent, TimelineFocus, TimelineScale, TimelineUnit, ViewMode } from "@/lib/types";
+import {
+  AIEvent,
+  TimelineFocus,
+  TimelineScale,
+  TimelineUnit,
+  ViewMode,
+} from "@/lib/types";
 import { format, parseISO, getDaysInMonth } from "date-fns";
 
 interface TimelineProps {
@@ -19,7 +25,7 @@ type TimeUnit = TimelineUnit;
 
 interface RenderNode {
   key: string;
-  x: number;
+  yearIndex: number;
   angle: number;
   radius: number;
   label: string;
@@ -28,14 +34,35 @@ interface RenderNode {
   year: number;
   month?: number;
   day?: number;
+  dayProgress?: number;
   events: AIEvent[];
   maxImpact: number;
   eventCount: number;
 }
 
+interface LayoutMetrics {
+  monthReveal: number;
+  dayReveal: number;
+  yearGap: number;
+  monthGap: number;
+  daySpread: number;
+}
+
+type SelectionAnchor = Pick<RenderNode, "key" | "unit" | "year" | "month" | "day">;
+
 const monthNames = [
-  "1月", "2月", "3月", "4月", "5月", "6月",
-  "7月", "8月", "9月", "10月", "11月", "12月",
+  "1月",
+  "2月",
+  "3月",
+  "4月",
+  "5月",
+  "6月",
+  "7月",
+  "8月",
+  "9月",
+  "10月",
+  "11月",
+  "12月",
 ];
 
 const scaleOptions: {
@@ -56,14 +83,14 @@ const scaleOptions: {
     key: "month",
     label: "年 + 月",
     title: "年月螺旋",
-    subtitle: "滚轮与方向键逐星球吸附，螺旋随选中星球转动，高亮星球始终置前。",
+    subtitle: "年份主星保持存在并平滑拉开，月份星球沿中轨浮现。",
     code: "Y + M",
   },
   {
     key: "day",
     label: "年 + 月 + 日",
     title: "全息日迹",
-    subtitle: "在年月螺旋上叠加日级事件星点，查看具体事件落点。",
+    subtitle: "在外轨展开日级星点，形成三层同心螺旋的完整视图。",
     code: "Y + M + D",
   },
 ];
@@ -74,8 +101,49 @@ const unitCopy: Record<TimeUnit, string> = {
   day: "日级星点",
 };
 
+const SCALE_INDEX: Record<TimelineScale, number> = {
+  year: 0,
+  month: 1,
+  day: 2,
+};
+
+const ORBIT_RADIUS: Record<TimeUnit, number> = {
+  year: 104,
+  month: 168,
+  day: 236,
+};
+
+const ANGLE_STEP: Record<TimeUnit, number> = {
+  year: 0.92,
+  month: 0.58,
+  day: 0.58,
+};
+
+const YEAR_GAP = {
+  compact: 320,
+  expandedMonth: 940,
+  expandedDay: 1060,
+};
+
+const MONTH_GAP = {
+  month: 84,
+  day: 94,
+};
+
+const DAY_SPREAD_RATIO = 0.88;
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function lerp(start: number, end: number, progress: number) {
+  return start + (end - start) * progress;
+}
+
 function eventImpact(events: AIEvent[]) {
-  return events.length > 0 ? Math.max(...events.map((event) => event.impact_score)) : 0;
+  return events.length > 0
+    ? Math.max(...events.map((event) => event.impact_score))
+    : 0;
 }
 
 function focusFromNode(node: RenderNode): TimelineFocus {
@@ -91,16 +159,85 @@ function focusFromNode(node: RenderNode): TimelineFocus {
   };
 }
 
+function getLayoutMetrics(scaleBlend: number): LayoutMetrics {
+  const monthReveal = clamp(scaleBlend, 0, 1);
+  const dayReveal = clamp(scaleBlend - 1, 0, 1);
+
+  const yearGapFromMonth = lerp(
+    YEAR_GAP.compact,
+    YEAR_GAP.expandedMonth,
+    monthReveal,
+  );
+  const yearGap = lerp(yearGapFromMonth, YEAR_GAP.expandedDay, dayReveal);
+  const monthGapFromMonth = lerp(0, MONTH_GAP.month, monthReveal);
+  const monthGap = lerp(monthGapFromMonth, MONTH_GAP.day, dayReveal);
+  const daySpread = monthGap * DAY_SPREAD_RATIO * dayReveal;
+
+  return {
+    monthReveal,
+    dayReveal,
+    yearGap,
+    monthGap,
+    daySpread,
+  };
+}
+
+function getUnitReveal(unit: TimeUnit, layout: LayoutMetrics) {
+  if (unit === "year") return 1;
+  if (unit === "month") return layout.monthReveal;
+  return layout.dayReveal;
+}
+
+function isUnitActiveForScale(unit: TimeUnit, timelineScale: TimelineScale) {
+  if (timelineScale === "year") return unit === "year";
+  if (timelineScale === "month") return unit === "year" || unit === "month";
+  return true;
+}
+
+function computeNodeWorldX(
+  node: RenderNode,
+  leftPad: number,
+  layout: LayoutMetrics,
+) {
+  const groupStartX = leftPad + node.yearIndex * layout.yearGap;
+
+  if (node.unit === "year") {
+    return groupStartX + 5.5 * layout.monthGap * layout.monthReveal;
+  }
+
+  if (node.unit === "month") {
+    return groupStartX + (node.month ?? 0) * layout.monthGap;
+  }
+
+  return (
+    groupStartX +
+    (node.month ?? 0) * layout.monthGap +
+    (node.dayProgress ?? 0) * layout.daySpread
+  );
+}
+
+function sortNodesByTargetX(
+  nodes: RenderNode[],
+  leftPad: number,
+  layout: LayoutMetrics,
+) {
+  return [...nodes].sort((a, b) => {
+    const diff = computeNodeWorldX(a, leftPad, layout) - computeNodeWorldX(b, leftPad, layout);
+    if (diff !== 0) return diff;
+    return a.unit.localeCompare(b.unit);
+  });
+}
+
 function TimelineCanvas({
   scrollX,
   globalRotation,
-  timelineScale,
+  layout,
   winW,
   winH,
 }: {
   scrollX: number;
   globalRotation: number;
-  timelineScale: TimelineScale;
+  layout: LayoutMetrics;
   winW: number;
   winH: number;
 }) {
@@ -123,60 +260,125 @@ function TimelineCanvas({
 
     ctx.clearRect(0, 0, width, height);
 
-    const horizon = ctx.createLinearGradient(0, axisY - 210, 0, axisY + 210);
+    const horizon = ctx.createLinearGradient(0, axisY - 260, 0, axisY + 260);
     horizon.addColorStop(0, "rgba(91,141,239,0)");
-    horizon.addColorStop(0.42, "rgba(91,141,239,0.055)");
-    horizon.addColorStop(0.5, timelineScale === "day" ? "rgba(240,192,96,0.18)" : "rgba(240,192,96,0.13)");
-    horizon.addColorStop(0.58, "rgba(139,92,246,0.06)");
+    horizon.addColorStop(0.38, "rgba(91,141,239,0.05)");
+    horizon.addColorStop(0.5, "rgba(240,192,96,0.12)");
+    horizon.addColorStop(0.62, "rgba(139,92,246,0.055)");
     horizon.addColorStop(1, "rgba(91,141,239,0)");
     ctx.fillStyle = horizon;
-    ctx.fillRect(0, axisY - 210, width, 420);
+    ctx.fillRect(0, axisY - 260, width, 520);
 
     ctx.save();
-    ctx.strokeStyle = "rgba(240,192,96,0.42)";
+    ctx.strokeStyle = "rgba(240,192,96,0.34)";
     ctx.lineWidth = 1;
-    ctx.shadowBlur = 22;
-    ctx.shadowColor = "rgba(240,192,96,0.36)";
+    ctx.shadowBlur = 18;
+    ctx.shadowColor = "rgba(240,192,96,0.28)";
     ctx.beginPath();
     ctx.moveTo(0, axisY);
     ctx.lineTo(width, axisY);
     ctx.stroke();
     ctx.restore();
 
+    const tracks = [
+      {
+        radius: ORBIT_RADIUS.year,
+        opacity: 1,
+        step: ANGLE_STEP.year / Math.max(layout.yearGap, 1),
+        rgb: "240,192,96",
+        frontAlpha: 0.24,
+        backAlpha: 0.12,
+        frontBlur: 20,
+        backBlur: 12,
+        frontWidth: 1.2,
+        backWidth: 0.9,
+      },
+      {
+        radius: ORBIT_RADIUS.month,
+        opacity: layout.monthReveal,
+        step: ANGLE_STEP.month / Math.max(layout.monthGap, 1),
+        rgb: "91,141,239",
+        frontAlpha: 0.22,
+        backAlpha: 0.1,
+        frontBlur: 18,
+        backBlur: 10,
+        frontWidth: 1.1,
+        backWidth: 0.8,
+      },
+      {
+        radius: ORBIT_RADIUS.day,
+        opacity: layout.dayReveal,
+        step:
+          ANGLE_STEP.day /
+          Math.max(layout.daySpread > 0 ? layout.daySpread : layout.monthGap, 1),
+        rgb: "139,92,246",
+        frontAlpha: 0.18,
+        backAlpha: 0.08,
+        frontBlur: 16,
+        backBlur: 9,
+        frontWidth: 0.95,
+        backWidth: 0.7,
+      },
+    ];
+
     ctx.save();
     ctx.globalCompositeOperation = "screen";
-    const step = timelineScale === "year" ? 0.009 : timelineScale === "month" ? 0.014 : 0.016;
-    const radius = timelineScale === "year" ? 104 : timelineScale === "month" ? 148 : 178;
-    for (const rail of [0, Math.PI]) {
-      ctx.beginPath();
-      for (let x = -90; x <= width + 90; x += 18) {
-        const worldX = x + scrollX;
-        const phase = worldX * step + rail + globalRotation;
-        const y = axisY + Math.sin(phase) * radius;
-        if (x === -90) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
+
+    for (const track of tracks) {
+      if (track.opacity <= 0.01) continue;
+
+      for (const rail of [0, Math.PI]) {
+        ctx.beginPath();
+
+        for (let x = -120; x <= width + 120; x += 18) {
+          const worldX = x + scrollX;
+          const phase = worldX * track.step + rail + globalRotation;
+          const y = axisY + Math.sin(phase) * track.radius;
+          if (x === -120) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+
+        const alpha =
+          (rail === 0 ? track.frontAlpha : track.backAlpha) * track.opacity;
+        const blur = rail === 0 ? track.frontBlur : track.backBlur;
+        const lineWidth = rail === 0 ? track.frontWidth : track.backWidth;
+
+        ctx.strokeStyle = `rgba(${track.rgb}, ${alpha})`;
+        ctx.lineWidth = lineWidth;
+        ctx.shadowBlur = blur * track.opacity;
+        ctx.shadowColor = `rgba(${track.rgb}, ${alpha + 0.06})`;
+        ctx.stroke();
       }
-      ctx.strokeStyle = rail === 0 ? "rgba(91,141,239,0.19)" : "rgba(240,192,96,0.11)";
-      ctx.lineWidth = rail === 0 ? 1.15 : 0.8;
-      ctx.shadowBlur = rail === 0 ? 18 : 12;
-      ctx.shadowColor = rail === 0 ? "rgba(91,141,239,0.28)" : "rgba(240,192,96,0.2)";
-      ctx.stroke();
     }
+
     ctx.restore();
 
     ctx.save();
     ctx.globalCompositeOperation = "screen";
-    const centerGlow = ctx.createRadialGradient(width / 2, axisY, 0, width / 2, axisY, 170);
+    const centerGlow = ctx.createRadialGradient(
+      width / 2,
+      axisY,
+      0,
+      width / 2,
+      axisY,
+      190,
+    );
     centerGlow.addColorStop(0, "rgba(255,236,180,0.28)");
-    centerGlow.addColorStop(0.18, "rgba(240,192,96,0.13)");
-    centerGlow.addColorStop(0.58, "rgba(91,141,239,0.055)");
+    centerGlow.addColorStop(0.2, "rgba(240,192,96,0.13)");
+    centerGlow.addColorStop(0.56, "rgba(91,141,239,0.05)");
+    centerGlow.addColorStop(0.82, "rgba(139,92,246,0.04)");
     centerGlow.addColorStop(1, "rgba(255,255,255,0)");
     ctx.fillStyle = centerGlow;
-    ctx.fillRect(width / 2 - 190, axisY - 190, 380, 380);
+    ctx.fillRect(width / 2 - 220, axisY - 220, 440, 440);
     ctx.restore();
-  }, [scrollX, globalRotation, timelineScale, winW, winH]);
+  }, [scrollX, globalRotation, layout, winW, winH]);
 
-  return <canvas ref={canvasRef} className="pointer-events-none absolute inset-0 h-full w-full" />;
+  return (
+    <canvas
+      ref={canvasRef}
+      className="pointer-events-none absolute inset-0 h-full w-full"
+    />
+  );
 }
 
 function GridView({
@@ -199,11 +401,16 @@ function GridView({
               opacity: 1,
               y: 0,
               scale: 1,
-              boxShadow: highlightedId === event.id
-                ? "0 0 0 1px rgba(240,192,96,0.5), 0 22px 70px rgba(212,168,83,0.16)"
-                : "0 22px 70px rgba(0,0,0,0.32)",
+              boxShadow:
+                highlightedId === event.id
+                  ? "0 0 0 1px rgba(240,192,96,0.5), 0 22px 70px rgba(212,168,83,0.16)"
+                  : "0 22px 70px rgba(0,0,0,0.32)",
             }}
-            transition={{ delay: index * 0.025, duration: 0.42, ease: "easeOut" }}
+            transition={{
+              delay: index * 0.025,
+              duration: 0.42,
+              ease: "easeOut",
+            }}
             onClick={() => onNodeClick(event)}
             className="group chronos-panel min-h-[190px] p-5 text-left transition-transform duration-300 hover:-translate-y-1"
           >
@@ -230,7 +437,10 @@ function GridView({
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                   {event.tags.slice(0, 3).map((tag) => (
-                    <span key={tag} className="rounded-full border border-white/10 bg-white/[0.04] px-2 py-0.5 text-[10px] text-cosmos-text-dim">
+                    <span
+                      key={tag}
+                      className="rounded-full border border-white/10 bg-white/[0.04] px-2 py-0.5 text-[10px] text-cosmos-text-dim"
+                    >
                       {tag}
                     </span>
                   ))}
@@ -270,8 +480,12 @@ function ListView({
             }`}
           >
             <div className="font-mono text-right">
-              <span className="block text-sm text-cosmos-gold">{format(parseISO(event.event_date), "yyyy")}</span>
-              <span className="text-[10px] tracking-[0.16em] text-cosmos-text-dim">{format(parseISO(event.event_date), "MM.dd")}</span>
+              <span className="block text-sm text-cosmos-gold">
+                {format(parseISO(event.event_date), "yyyy")}
+              </span>
+              <span className="text-[10px] tracking-[0.16em] text-cosmos-text-dim">
+                {format(parseISO(event.event_date), "MM.dd")}
+              </span>
             </div>
             <div className="min-w-0">
               <h3 className="truncate text-sm text-cosmos-text transition-colors group-hover:text-cosmos-gold">
@@ -279,7 +493,10 @@ function ListView({
               </h3>
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {event.tags.slice(0, 3).map((tag) => (
-                  <span key={tag} className="rounded-full bg-white/[0.05] px-2 py-0.5 text-[9px] text-cosmos-text-dim">
+                  <span
+                    key={tag}
+                    className="rounded-full bg-white/[0.05] px-2 py-0.5 text-[9px] text-cosmos-text-dim"
+                  >
                     {tag}
                   </span>
                 ))}
@@ -311,7 +528,9 @@ export function Timeline({
   const [winW, setWinW] = useState(1200);
   const [winH, setWinH] = useState(800);
   const [globalRotation, setGlobalRotation] = useState(0);
+  const [scaleBlend, setScaleBlend] = useState(SCALE_INDEX[timelineScale]);
   const lastFocusKey = useRef<string | null>(null);
+  const selectionAnchorRef = useRef<SelectionAnchor | null>(null);
   const isDragging = useRef(false);
   const lastX = useRef(0);
   const dragDelta = useRef(0);
@@ -320,6 +539,8 @@ export function Timeline({
   const currentScrollX = useRef(0);
   const targetRotation = useRef(0);
   const currentRotation = useRef(0);
+  const targetScaleBlend = useRef(SCALE_INDEX[timelineScale]);
+  const currentScaleBlend = useRef(SCALE_INDEX[timelineScale]);
   const wheelLockedUntil = useRef(0);
 
   useEffect(() => {
@@ -334,13 +555,22 @@ export function Timeline({
   }, []);
 
   const yearRange = useMemo(() => {
-    const years = events.map((event) => parseISO(event.event_date).getFullYear());
+    const years = events.map((event) =>
+      parseISO(event.event_date).getFullYear(),
+    );
     const min = Math.min(...years);
     const max = Math.max(...years);
     return Array.from({ length: max - min + 1 }, (_, index) => min + index);
   }, [events]);
 
-  const nodes = useMemo<RenderNode[]>(() => {
+  const leftPad = winW / 2;
+  const layoutMetrics = useMemo(() => getLayoutMetrics(scaleBlend), [scaleBlend]);
+  const targetLayoutMetrics = useMemo(
+    () => getLayoutMetrics(SCALE_INDEX[timelineScale]),
+    [timelineScale],
+  );
+
+  const allNodes = useMemo<RenderNode[]>(() => {
     const byYear = new Map<number, AIEvent[]>();
     const byMonth = new Map<string, AIEvent[]>();
     const byDay = new Map<string, AIEvent[]>();
@@ -357,24 +587,21 @@ export function Timeline({
       byDay.set(dayKey, [...(byDay.get(dayKey) ?? []), event]);
     }
 
-    const stepX = timelineScale === "year" ? 310 : timelineScale === "month" ? 78 : 84;
-    const helixRadius = timelineScale === "year" ? 120 : timelineScale === "month" ? 160 : 190;
-    const leftPad = winW / 2;
     const renderNodes: RenderNode[] = [];
 
-    const freq = timelineScale === "year" ? 0.96 : 0.58;
-
     for (const [yearIndex, year] of yearRange.entries()) {
-      const yearEvents = (byYear.get(year) ?? []).sort((a, b) => b.impact_score - a.impact_score);
-      const yearOrdinal = timelineScale === "year" ? yearIndex : yearIndex * 12 + 5.5;
-      const yearRadius = helixRadius * 0.72;
+      const yearEvents = (byYear.get(year) ?? []).sort(
+        (a, b) => b.impact_score - a.impact_score,
+      );
+
       renderNodes.push({
         key: `year-${year}`,
-        x: leftPad + yearOrdinal * stepX,
-        angle: yearOrdinal * freq,
-        radius: yearRadius,
+        yearIndex,
+        angle: yearIndex * ANGLE_STEP.year,
+        radius: ORBIT_RADIUS.year,
         label: String(year),
-        subLabel: yearEvents.length > 0 ? `${yearEvents.length} 个事件` : "低活动年",
+        subLabel:
+          yearEvents.length > 0 ? `${yearEvents.length} 个事件` : "低活动年",
         unit: "year",
         year,
         events: yearEvents,
@@ -382,18 +609,21 @@ export function Timeline({
         eventCount: yearEvents.length,
       });
 
-      if (timelineScale === "year") continue;
-
       for (let month = 0; month < 12; month += 1) {
-        const monthEvents = (byMonth.get(`${year}-${month}`) ?? []).sort((a, b) => b.impact_score - a.impact_score);
-        const monthOrdinal = yearIndex * 12 + month;
+        const monthEvents = (byMonth.get(`${year}-${month}`) ?? []).sort(
+          (a, b) => b.impact_score - a.impact_score,
+        );
+
         renderNodes.push({
           key: `month-${year}-${month}`,
-          x: leftPad + monthOrdinal * stepX,
-          angle: monthOrdinal * freq,
-          radius: helixRadius,
+          yearIndex,
+          angle: (yearIndex * 12 + month) * ANGLE_STEP.month,
+          radius: ORBIT_RADIUS.month,
           label: monthNames[month],
-          subLabel: monthEvents.length > 0 ? `${year} 年 ${monthNames[month]} · ${monthEvents.length} 个事件` : `${year} 年 ${monthNames[month]} · 暂无事件`,
+          subLabel:
+            monthEvents.length > 0
+              ? `${year} 年 ${monthNames[month]} · ${monthEvents.length} 个事件`
+              : `${year} 年 ${monthNames[month]} · 暂无事件`,
           unit: "month",
           year,
           month,
@@ -404,80 +634,115 @@ export function Timeline({
       }
     }
 
-    if (timelineScale === "day") {
-      Array.from(byDay.entries())
-        .sort(([a], [b]) => a.localeCompare(b))
-        .forEach(([key, dayEvents]) => {
-          const [yearText, monthText, dayText] = key.split("-");
-          const year = Number(yearText);
-          const month = Number(monthText);
-          const day = Number(dayText);
-          const yearIndex = yearRange.indexOf(year);
-          if (yearIndex < 0) return;
-          const daysInMonth = getDaysInMonth(new Date(year, month, 1));
-          const dayOrdinal = yearIndex * 12 + month + (day - 1) / daysInMonth;
-          renderNodes.push({
-            key: `day-${key}`,
-            x: leftPad + dayOrdinal * stepX,
-            angle: dayOrdinal * freq,
-            radius: helixRadius * 1.08,
-            label: String(day).padStart(2, "0"),
-            subLabel: dayEvents[0]?.title,
-            unit: "day",
-            year,
-            month,
-            day,
-            events: dayEvents.sort((a, b) => b.impact_score - a.impact_score),
-            maxImpact: eventImpact(dayEvents),
-            eventCount: dayEvents.length,
-          });
-        });
-    }
+    Array.from(byDay.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .forEach(([key, dayEvents]) => {
+        const [yearText, monthText, dayText] = key.split("-");
+        const year = Number(yearText);
+        const month = Number(monthText);
+        const day = Number(dayText);
+        const yearIndex = yearRange.indexOf(year);
+        if (yearIndex < 0) return;
 
-    return renderNodes.sort((a, b) => a.x - b.x || a.unit.localeCompare(b.unit));
-  }, [events, timelineScale, winW, yearRange]);
+        const daysInMonth = getDaysInMonth(new Date(year, month, 1));
+        const dayProgress =
+          daysInMonth <= 1 ? 0 : (day - 1) / Math.max(daysInMonth - 1, 1);
+
+        renderNodes.push({
+          key: `day-${key}`,
+          yearIndex,
+          angle: (yearIndex * 12 + month + dayProgress) * ANGLE_STEP.day,
+          radius: ORBIT_RADIUS.day,
+          label: String(day).padStart(2, "0"),
+          subLabel: dayEvents[0]?.title,
+          unit: "day",
+          year,
+          month,
+          day,
+          dayProgress,
+          events: dayEvents.sort((a, b) => b.impact_score - a.impact_score),
+          maxImpact: eventImpact(dayEvents),
+          eventCount: dayEvents.length,
+        });
+      });
+
+    return renderNodes;
+  }, [events, yearRange]);
+
+  const activeNodes = useMemo(() => {
+    return sortNodesByTargetX(
+      allNodes.filter((node) => isUnitActiveForScale(node.unit, timelineScale)),
+      leftPad,
+      targetLayoutMetrics,
+    );
+  }, [allNodes, timelineScale, leftPad, targetLayoutMetrics]);
 
   const totalWidth = useMemo(() => {
-    if (nodes.length === 0) return winW;
-    return Math.max(winW, Math.max(...nodes.map((node) => node.x)) + winW / 2);
-  }, [nodes, winW]);
+    const activeWorldXs = allNodes
+      .filter((node) => getUnitReveal(node.unit, layoutMetrics) > 0.05)
+      .map((node) => computeNodeWorldX(node, leftPad, layoutMetrics));
+
+    if (activeWorldXs.length === 0) return winW;
+
+    return Math.max(winW, Math.max(...activeWorldXs) + winW / 2);
+  }, [allNodes, layoutMetrics, leftPad, winW]);
 
   const maxScroll = Math.max(0, totalWidth - winW);
-  const focusedNode = nodes[selectedIndex] ?? null;
+  const focusedNode = activeNodes[selectedIndex] ?? null;
 
   const startAnim = useCallback(() => {
     if (animRef.current) return;
+
     const animate = () => {
       const scrollDiff = targetScrollX.current - currentScrollX.current;
       const rotDiff = targetRotation.current - currentRotation.current;
+      const blendDiff = targetScaleBlend.current - currentScaleBlend.current;
 
-      if (Math.abs(scrollDiff) < 0.22 && Math.abs(rotDiff) < 0.0005) {
+      if (
+        Math.abs(scrollDiff) < 0.22 &&
+        Math.abs(rotDiff) < 0.0005 &&
+        Math.abs(blendDiff) < 0.001
+      ) {
         currentScrollX.current = targetScrollX.current;
         currentRotation.current = targetRotation.current;
+        currentScaleBlend.current = targetScaleBlend.current;
         setScrollX(targetScrollX.current);
         setGlobalRotation(targetRotation.current);
+        setScaleBlend(targetScaleBlend.current);
         animRef.current = null;
         return;
       }
 
-      currentScrollX.current += scrollDiff * 0.14;
-      currentRotation.current += rotDiff * 0.14;
+      currentScrollX.current += scrollDiff * 0.2;
+      currentRotation.current += rotDiff * 0.2;
+      currentScaleBlend.current += blendDiff * 0.18;
+
       setScrollX(currentScrollX.current);
       setGlobalRotation(currentRotation.current);
+      setScaleBlend(currentScaleBlend.current);
       animRef.current = requestAnimationFrame(animate);
     };
+
     animRef.current = requestAnimationFrame(animate);
   }, []);
 
-  const stepFocus = useCallback((direction: number) => {
-    if (nodes.length === 0) return;
-    setSelectedIndex((index) => Math.max(0, Math.min(index + direction, nodes.length - 1)));
-  }, [nodes.length]);
+  const stepFocus = useCallback(
+    (direction: number) => {
+      if (activeNodes.length === 0) return;
+      setSelectedIndex((index) =>
+        Math.max(0, Math.min(index + direction, activeNodes.length - 1)),
+      );
+    },
+    [activeNodes.length],
+  );
 
-  const selectNode = useCallback((node: RenderNode) => {
-    const nextIndex = nodes.findIndex((item) => item.key === node.key);
-    if (nextIndex >= 0) setSelectedIndex(nextIndex);
-  }, [nodes]);
+  const selectNode = useCallback(
+    (node: RenderNode) => {
+      const nextIndex = activeNodes.findIndex((item) => item.key === node.key);
+      if (nextIndex >= 0) setSelectedIndex(nextIndex);
+    },
+    [activeNodes],
+  );
 
   useEffect(() => {
     return () => {
@@ -487,20 +752,69 @@ export function Timeline({
   }, []);
 
   useEffect(() => {
-    if (nodes.length === 0) return;
-    const firstEventIndex = nodes.findIndex((node) => node.eventCount > 0);
-    setSelectedIndex(firstEventIndex >= 0 ? firstEventIndex : 0);
-    lastFocusKey.current = null;
-  }, [timelineScale, nodes.length]);
-
-  useEffect(() => {
-    if (nodes.length === 0) return;
-    setSelectedIndex((index) => Math.max(0, Math.min(index, nodes.length - 1)));
-  }, [nodes.length]);
+    targetScaleBlend.current = SCALE_INDEX[timelineScale];
+    startAnim();
+  }, [timelineScale, startAnim]);
 
   useEffect(() => {
     if (!focusedNode) return;
-    const nextTarget = Math.max(0, Math.min(focusedNode.x - winW / 2, maxScroll));
+    selectionAnchorRef.current = {
+      key: focusedNode.key,
+      unit: focusedNode.unit,
+      year: focusedNode.year,
+      month: focusedNode.month,
+      day: focusedNode.day,
+    };
+  }, [focusedNode]);
+
+  useEffect(() => {
+    if (activeNodes.length === 0) return;
+
+    const anchor = selectionAnchorRef.current;
+    const fallbackIndex = activeNodes.findIndex((node) => node.eventCount > 0);
+
+    if (!anchor) {
+      setSelectedIndex(fallbackIndex >= 0 ? fallbackIndex : 0);
+      lastFocusKey.current = null;
+      return;
+    }
+
+    const candidateKeys: string[] = [];
+
+    if (timelineScale === "year") {
+      candidateKeys.push(`year-${anchor.year}`);
+    }
+
+    if (timelineScale === "month") {
+      if (anchor.unit === "year") candidateKeys.push(anchor.key);
+      if (anchor.month != null) candidateKeys.push(`month-${anchor.year}-${anchor.month}`);
+      candidateKeys.push(`year-${anchor.year}`);
+    }
+
+    if (timelineScale === "day") {
+      candidateKeys.push(anchor.key);
+      if (anchor.month != null) candidateKeys.push(`month-${anchor.year}-${anchor.month}`);
+      candidateKeys.push(`year-${anchor.year}`);
+    }
+
+    const nextIndex = [...new Set(candidateKeys)]
+      .map((key) => activeNodes.findIndex((node) => node.key === key))
+      .find((index) => index >= 0);
+
+    setSelectedIndex(nextIndex ?? (fallbackIndex >= 0 ? fallbackIndex : 0));
+    lastFocusKey.current = null;
+  }, [activeNodes, timelineScale]);
+
+  useEffect(() => {
+    if (activeNodes.length === 0) return;
+    setSelectedIndex((index) => Math.max(0, Math.min(index, activeNodes.length - 1)));
+  }, [activeNodes.length]);
+
+  useEffect(() => {
+    if (!focusedNode) return;
+
+    const focusedWorldX = computeNodeWorldX(focusedNode, leftPad, layoutMetrics);
+    const nextTarget = Math.max(0, Math.min(focusedWorldX - winW / 2, maxScroll));
     targetScrollX.current = nextTarget;
 
     const rawTarget = -focusedNode.angle;
@@ -510,7 +824,7 @@ export function Timeline({
     targetRotation.current = currentRotation.current + wrappedDiff;
 
     startAnim();
-  }, [focusedNode, maxScroll, startAnim, winW]);
+  }, [focusedNode, layoutMetrics, leftPad, maxScroll, startAnim, winW]);
 
   useEffect(() => {
     targetScrollX.current = Math.max(0, Math.min(targetScrollX.current, maxScroll));
@@ -526,6 +840,7 @@ export function Timeline({
       }
       return;
     }
+
     if (lastFocusKey.current === focusedNode.key) return;
     lastFocusKey.current = focusedNode.key;
     onFocusChange(focusFromNode(focusedNode));
@@ -533,9 +848,12 @@ export function Timeline({
 
   useEffect(() => {
     if (viewMode !== "timeline") return;
+
     const handleKeyDown = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
-      if (target && ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName)) return;
+      if (target && ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName)) {
+        return;
+      }
       if (event.key === "ArrowRight") {
         event.preventDefault();
         stepFocus(1);
@@ -545,6 +863,7 @@ export function Timeline({
         stepFocus(-1);
       }
     };
+
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [stepFocus, viewMode]);
@@ -553,13 +872,17 @@ export function Timeline({
     if (viewMode !== "timeline") onFocusChange(null);
   }, [onFocusChange, viewMode]);
 
-  const handleWheel = useCallback((event: React.WheelEvent) => {
-    event.preventDefault();
-    const now = Date.now();
-    if (now < wheelLockedUntil.current) return;
-    stepFocus(event.deltaY > 0 ? 1 : -1);
-    wheelLockedUntil.current = now + 100;
-  }, [stepFocus]);
+  const handleWheel = useCallback(
+    (event: React.WheelEvent) => {
+      event.preventDefault();
+      const now = Date.now();
+      if (now < wheelLockedUntil.current) return;
+      const dir = event.deltaY > 0 ? 1 : -1;
+      stepFocus(dir);
+      wheelLockedUntil.current = now + 0;
+    },
+    [stepFocus],
+  );
 
   const handleMouseDown = useCallback((event: React.MouseEvent) => {
     isDragging.current = true;
@@ -567,52 +890,77 @@ export function Timeline({
     dragDelta.current = 0;
   }, []);
 
-  const handleMouseMove = useCallback((event: React.MouseEvent) => {
-    if (!isDragging.current) return;
-    const delta = lastX.current - event.clientX;
-    lastX.current = event.clientX;
-    dragDelta.current += delta;
-    if (Math.abs(dragDelta.current) < 86) return;
-    stepFocus(dragDelta.current > 0 ? 1 : -1);
-    dragDelta.current = 0;
-  }, [stepFocus]);
+  const handleMouseMove = useCallback(
+    (event: React.MouseEvent) => {
+      if (!isDragging.current) return;
+      const delta = lastX.current - event.clientX;
+      lastX.current = event.clientX;
+      dragDelta.current += delta;
+      if (Math.abs(dragDelta.current) < 86) return;
+      stepFocus(dragDelta.current > 0 ? 1 : -1);
+      dragDelta.current = 0;
+    },
+    [stepFocus],
+  );
 
   const handleMouseUp = useCallback(() => {
     isDragging.current = false;
     dragDelta.current = 0;
   }, []);
 
-  const openNode = useCallback((node: RenderNode) => {
-    selectNode(node);
-    if (node.eventCount === 0) return;
-    onNodeClick(node.events[0]);
-  }, [onNodeClick, selectNode]);
+  const openNode = useCallback(
+    (node: RenderNode) => {
+      selectNode(node);
+      if (node.eventCount === 0) return;
+      onNodeClick(node.events[0]);
+    },
+    [onNodeClick, selectNode],
+  );
 
   if (viewMode === "grid") {
-    return <GridView events={events} onNodeClick={onNodeClick} highlightedId={highlightedId} />;
+    return (
+      <GridView
+        events={events}
+        onNodeClick={onNodeClick}
+        highlightedId={highlightedId}
+      />
+    );
   }
 
   if (viewMode === "list") {
-    return <ListView events={events} onNodeClick={onNodeClick} highlightedId={highlightedId} />;
+    return (
+      <ListView
+        events={events}
+        onNodeClick={onNodeClick}
+        highlightedId={highlightedId}
+      />
+    );
   }
 
-  const meta = scaleOptions.find((option) => option.key === timelineScale) ?? scaleOptions[1];
+  const meta =
+    scaleOptions.find((option) => option.key === timelineScale) ??
+    scaleOptions[1];
   const axisY = Math.max(350, winH * 0.6);
 
   const visibleNodes = useMemo(() => {
-    return nodes
+    return allNodes
       .map((node) => {
+        const reveal = getUnitReveal(node.unit, layoutMetrics);
+        const worldX = computeNodeWorldX(node, leftPad, layoutMetrics);
         const angle = node.angle + globalRotation;
         return {
           node,
-          nodeX: node.x - scrollX,
+          reveal,
+          nodeX: worldX - scrollX,
           renderY: Math.sin(angle) * node.radius,
           renderZ: Math.cos(angle),
         };
       })
-      .filter(({ nodeX }) => nodeX > -230 && nodeX < winW + 230)
+      .filter(
+        ({ nodeX, reveal }) => reveal > 0.01 && nodeX > -340 && nodeX < winW + 340,
+      )
       .sort((a, b) => a.renderZ - b.renderZ);
-  }, [nodes, scrollX, globalRotation, winW]);
+  }, [allNodes, globalRotation, layoutMetrics, leftPad, scrollX, winW]);
 
   return (
     <div
@@ -623,7 +971,13 @@ export function Timeline({
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
     >
-      <TimelineCanvas scrollX={scrollX} globalRotation={globalRotation} timelineScale={timelineScale} winW={winW} winH={winH} />
+      <TimelineCanvas
+        scrollX={scrollX}
+        globalRotation={globalRotation}
+        layout={layoutMetrics}
+        winW={winW}
+        winH={winH}
+      />
 
       <motion.div
         initial={{ opacity: 0, y: -16, filter: "blur(10px)" }}
@@ -642,7 +996,9 @@ export function Timeline({
             <h2 className="mt-2 font-display text-2xl leading-none tracking-[-0.04em] aurora-text md:text-3xl">
               {meta.title}
             </h2>
-            <p className="mt-1 max-w-2xl text-xs leading-5 text-cosmos-text-dim md:text-sm md:leading-6">{meta.subtitle}</p>
+            <p className="mt-1 max-w-2xl text-xs leading-5 text-cosmos-text-dim md:text-sm md:leading-6">
+              {meta.subtitle}
+            </p>
           </div>
 
           <div className="grid shrink-0 grid-cols-3 gap-2 rounded-[24px] border border-white/[0.08] bg-black/28 p-1.5 shadow-[inset_0_0_24px_rgba(255,255,255,0.03)]">
@@ -660,9 +1016,15 @@ export function Timeline({
                       : "text-cosmos-text-dim hover:bg-white/[0.06] hover:text-cosmos-text"
                   }`}
                 >
-                  <span className={`absolute inset-x-3 top-0 h-px bg-gradient-to-r from-transparent via-cosmos-gold/70 to-transparent transition-opacity ${active ? "opacity-100" : "opacity-0 group-hover:opacity-70"}`} />
-                  <span className="relative block font-mono text-[10px] uppercase tracking-[0.2em]">{option.code}</span>
-                  <span className="relative mt-1 block whitespace-nowrap text-xs tracking-wider">{option.label}</span>
+                  <span
+                    className={`absolute inset-x-3 top-0 h-px bg-gradient-to-r from-transparent via-cosmos-gold/70 to-transparent transition-opacity ${active ? "opacity-100" : "opacity-0 group-hover:opacity-70"}`}
+                  />
+                  <span className="relative block font-mono text-[10px] uppercase tracking-[0.2em]">
+                    {option.code}
+                  </span>
+                  <span className="relative mt-1 block whitespace-nowrap text-xs tracking-wider">
+                    {option.label}
+                  </span>
                 </button>
               );
             })}
@@ -670,147 +1032,202 @@ export function Timeline({
         </div>
       </motion.div>
 
-      <div className="pointer-events-none absolute inset-0 overflow-hidden" style={{ perspective: 1100 }}>
-        <div className="absolute bottom-0 left-0 top-[170px] z-[70] w-[18vw] bg-gradient-to-r from-[#03040a] via-[#03040a]/50 to-transparent" />
-        <div className="absolute bottom-0 right-0 top-[170px] z-[70] w-[18vw] bg-gradient-to-l from-[#03040a] via-[#03040a]/50 to-transparent" />
+      <div
+        className="pointer-events-none absolute inset-0 overflow-hidden"
+        style={{ perspective: 1100 }}
+      >
+        <div className="absolute bottom-0 left-0 top-[170px] z-[70] w-[18vw] bg-gradient-to-r from-[#03040a] via-[#03040a]/45 to-transparent" />
+        <div className="absolute bottom-0 right-0 top-[170px] z-[70] w-[18vw] bg-gradient-to-l from-[#03040a] via-[#03040a]/45 to-transparent" />
         <div className="absolute left-1/2 top-[18vh] z-30 h-[70vh] w-px -translate-x-1/2 bg-gradient-to-b from-transparent via-cosmos-gold/40 to-transparent shadow-[0_0_14px_rgba(240,192,96,0.35)]" />
         <div
           className="absolute left-1/2 z-30 h-24 w-[220px] -translate-x-1/2 -translate-y-1/2 bg-[radial-gradient(ellipse_at_center,rgba(255,238,190,0.42)_0%,rgba(240,192,96,0.14)_24%,rgba(91,141,239,0.07)_48%,transparent_72%)] blur-sm"
           style={{ top: axisY }}
         />
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={`helix-${timelineScale}`}
-            initial={{ opacity: 0, scale: 0.98, filter: "blur(12px)" }}
-            animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
-            exit={{ opacity: 0, scale: 1.02, filter: "blur(12px)" }}
-            transition={{ duration: 0.34, ease: "easeOut" }}
-            className="absolute inset-0"
-          >
-            {visibleNodes.map(({ node, nodeX, renderY, renderZ }) => {
-              const depth = (renderZ + 1) / 2;
-              const hasEvents = node.eventCount > 0;
-              const isFocused = focusedNode?.key === node.key;
-              const isHighlighted = highlightedId != null && node.events.some((event) => event.id === highlightedId);
-              const density = Math.min(1, node.eventCount / 4);
-              const isMajor = node.maxImpact >= 95;
-              const isStrong = node.maxImpact >= 85 || node.eventCount >= 2;
-              const baseSize = node.unit === "year" ? 40 : node.unit === "month" ? 20 : 11;
-              const depthSize = node.unit === "year" ? 14 : node.unit === "month" ? 8 : 4;
-              const nodeSize = baseSize + density * depthSize + depth * (node.unit === "year" ? 10 : node.unit === "month" ? 6 : 3);
-              const nodeY = axisY + renderY;
-              const scale = 0.66 + depth * 0.5 + (isFocused ? 0.24 : 0);
-              const labelOffset = renderY < 0 ? -50 : 38;
-              const labelWidth = node.unit === "year" ? 150 : node.unit === "month" ? 112 : 78;
-              const showLabelCard = isFocused || hasEvents || node.unit === "year";
-              const accent = node.unit === "year"
-                ? "rgba(240,192,96,ALPHA)"
-                : node.unit === "month"
-                  ? "rgba(91,141,239,ALPHA)"
-                  : "rgba(139,92,246,ALPHA)";
-              const idleOpacity = isFocused ? 1 : node.unit !== "year" && !hasEvents ? 0.18 + depth * 0.22 : 0.58 + depth * 0.3;
 
-              return (
-                <div
-                  key={node.key}
-                  className="pointer-events-auto absolute transition-[filter,opacity] duration-300"
+        {visibleNodes.map(({ node, reveal, nodeX, renderY, renderZ }) => {
+          const depth = (renderZ + 1) / 2;
+          const hasEvents = node.eventCount > 0;
+          const isFocused = focusedNode?.key === node.key;
+          const isHighlighted =
+            highlightedId != null &&
+            node.events.some((event) => event.id === highlightedId);
+          const density = Math.min(1, node.eventCount / 4);
+          const isMajor = node.maxImpact >= 95;
+          const isStrong = node.maxImpact >= 85 || node.eventCount >= 2;
+          const baseSize =
+            node.unit === "year" ? 40 : node.unit === "month" ? 20 : 11;
+          const depthSize =
+            node.unit === "year" ? 14 : node.unit === "month" ? 8 : 4;
+          const visibilityScale = 0.72 + reveal * 0.28;
+          const nodeSize =
+            (baseSize +
+              density * depthSize +
+              depth * (node.unit === "year" ? 10 : node.unit === "month" ? 6 : 3)) *
+            visibilityScale;
+          const nodeY = axisY + renderY;
+          const scale =
+            (0.66 + depth * 0.5 + (isFocused ? 0.24 : 0)) * visibilityScale;
+          const labelOffset = renderY < 0 ? -50 : 38;
+          const labelWidth =
+            node.unit === "year" ? 150 : node.unit === "month" ? 112 : 78;
+          const showLabelCard =
+            reveal > 0.35 && (isFocused || hasEvents || node.unit === "year");
+          const accent =
+            node.unit === "year"
+              ? "rgba(240,192,96,ALPHA)"
+              : node.unit === "month"
+                ? "rgba(91,141,239,ALPHA)"
+                : "rgba(139,92,246,ALPHA)";
+          const idleOpacity =
+            (isFocused
+              ? 1
+              : node.unit !== "year" && !hasEvents
+                ? 0.18 + depth * 0.22
+                : 0.58 + depth * 0.3) * reveal;
+          const interactive =
+            isUnitActiveForScale(node.unit, timelineScale) &&
+            (node.unit === "year" || reveal > 0.55);
+
+          return (
+            <motion.div
+              key={node.key}
+              initial={false}
+              animate={{ opacity: idleOpacity }}
+              transition={{ duration: 0.24, ease: "easeOut" }}
+              className="absolute"
+              style={{
+                left: nodeX,
+                top: nodeY,
+                pointerEvents: interactive ? "auto" : "none",
+                zIndex: Math.round(20 + depth * 60 + (isFocused ? 90 : 0)),
+                transform: `translate(-50%, -50%) translateZ(${renderZ * 130}px) scale(${scale})`,
+                filter: `blur(${Math.max(0, (1 - depth) * 0.8 - (isFocused ? 1 : 0))}px)`,
+              }}
+            >
+              {hasEvents && (isFocused || isStrong) && (
+                <motion.div
+                  className="absolute left-1/2 top-1/2 rounded-full border border-white/10"
                   style={{
-                    left: nodeX,
-                    top: nodeY,
-                    opacity: idleOpacity,
-                    zIndex: Math.round(20 + depth * 60 + (isFocused ? 90 : 0)),
-                    transform: `translate(-50%, -50%) translateZ(${renderZ * 130}px) scale(${scale})`,
-                    filter: `blur(${Math.max(0, (1 - depth) * 0.8 - (isFocused ? 1 : 0))}px)`,
+                    width: nodeSize * (isFocused ? 2.45 : 1.85),
+                    height: nodeSize * (isFocused ? 2.45 : 1.85),
+                    marginLeft: nodeSize * (isFocused ? -1.225 : -0.925),
+                    marginTop: nodeSize * (isFocused ? -1.225 : -0.925),
                   }}
-                >
-                  {hasEvents && (isFocused || isStrong) && (
-                    <motion.div
-                      className="absolute left-1/2 top-1/2 rounded-full border border-white/10"
-                      style={{
-                        width: nodeSize * (isFocused ? 2.45 : 1.85),
-                        height: nodeSize * (isFocused ? 2.45 : 1.85),
-                        marginLeft: nodeSize * (isFocused ? -1.225 : -0.925),
-                        marginTop: nodeSize * (isFocused ? -1.225 : -0.925),
-                      }}
-                      animate={{ rotate: 360, opacity: isFocused ? [0.42, 0.82, 0.42] : [0.18, 0.34, 0.18] }}
-                      transition={{ rotate: { duration: node.unit === "year" ? 30 : 22, repeat: Infinity, ease: "linear" }, opacity: { duration: 3.6, repeat: Infinity, ease: "easeInOut" } }}
-                    />
-                  )}
+                  animate={{
+                    rotate: 360,
+                    opacity: isFocused
+                      ? [0.42, 0.82, 0.42]
+                      : [0.18, 0.34, 0.18],
+                  }}
+                  transition={{
+                    rotate: {
+                      duration: node.unit === "year" ? 30 : 22,
+                      repeat: Infinity,
+                      ease: "linear",
+                    },
+                    opacity: {
+                      duration: 3.6,
+                      repeat: Infinity,
+                      ease: "easeInOut",
+                    },
+                  }}
+                />
+              )}
 
-                  <button
-                    onClick={() => openNode(node)}
-                    onMouseEnter={() => {
-                      setHoveredNode(node);
-                      setTooltipPos({ x: nodeX, y: nodeY + labelOffset });
-                    }}
-                    onMouseLeave={() => setHoveredNode(null)}
-                    aria-label={hasEvents ? `${node.label}: ${node.eventCount} 个事件` : `${node.label}: 无事件`}
-                    className={`relative z-10 flex items-center justify-center rounded-full border transition-transform duration-300 ${
-                      hasEvents ? "cursor-pointer hover:scale-110" : "cursor-default hover:scale-105"
-                    } ${
-                      node.unit === "year" ? "border-cosmos-gold/45" : node.unit === "month" ? "border-cosmos-blue/36" : "border-cosmos-purple/42"
-                    }`}
-                    style={{
-                      width: nodeSize,
-                      height: nodeSize,
-                      background: hasEvents
-                        ? `radial-gradient(circle at 30% 24%, rgba(255,255,255,0.96) 0%, ${accent.replace("ALPHA", isMajor ? "0.9" : "0.68")} 18%, ${accent.replace("ALPHA", "0.32")} 58%, rgba(3,4,10,0.36) 100%)`
-                        : node.unit === "month"
-                          ? "radial-gradient(circle at 35% 25%, rgba(91,141,239,0.24), rgba(255,255,255,0.035) 70%)"
-                          : "rgba(255,255,255,0.055)",
-                      boxShadow: hasEvents
-                        ? isFocused || isHighlighted
-                          ? `0 0 ${nodeSize * 1.75}px ${accent.replace("ALPHA", "0.72")}, inset 0 0 ${nodeSize * 0.45}px rgba(255,255,255,0.28)`
-                          : `0 0 ${nodeSize * (isStrong ? 0.92 : 0.58)}px ${accent.replace("ALPHA", isStrong ? "0.32" : "0.18")}, inset -8px -10px ${nodeSize * 0.35}px rgba(0,0,0,0.32)`
-                        : "inset -6px -8px 14px rgba(0,0,0,0.26)",
-                    }}
-                  >
-                    {hasEvents && <span className="h-1.5 w-1.5 rounded-full bg-white/85 shadow-[0_0_10px_rgba(255,255,255,0.7)]" />}
-                  </button>
+              <button
+                onClick={() => openNode(node)}
+                onMouseEnter={() => {
+                  setHoveredNode(node);
+                  setTooltipPos({ x: nodeX, y: nodeY + labelOffset });
+                }}
+                onMouseLeave={() => setHoveredNode(null)}
+                aria-label={
+                  hasEvents
+                    ? `${node.label}: ${node.eventCount} 个事件`
+                    : `${node.label}: 无事件`
+                }
+                className={`relative z-10 flex items-center justify-center rounded-full border transition-transform duration-300 ${
+                  interactive && hasEvents
+                    ? "cursor-pointer hover:scale-110"
+                    : interactive
+                      ? "cursor-pointer hover:scale-105"
+                      : "cursor-default"
+                } ${
+                  node.unit === "year"
+                    ? "border-cosmos-gold/45"
+                    : node.unit === "month"
+                      ? "border-cosmos-blue/36"
+                      : "border-cosmos-purple/42"
+                }`}
+                style={{
+                  width: nodeSize,
+                  height: nodeSize,
+                  background: hasEvents
+                    ? `radial-gradient(circle at 30% 24%, rgba(255,255,255,0.96) 0%, ${accent.replace("ALPHA", isMajor ? "0.9" : "0.68")} 18%, ${accent.replace("ALPHA", "0.32")} 58%, rgba(3,4,10,0.36) 100%)`
+                    : node.unit === "month"
+                      ? "radial-gradient(circle at 35% 25%, rgba(91,141,239,0.24), rgba(255,255,255,0.035) 70%)"
+                      : "rgba(255,255,255,0.055)",
+                  boxShadow: hasEvents
+                    ? isFocused || isHighlighted
+                      ? `0 0 ${nodeSize * 1.75}px ${accent.replace("ALPHA", "0.72")}, inset 0 0 ${nodeSize * 0.45}px rgba(255,255,255,0.28)`
+                      : `0 0 ${nodeSize * (isStrong ? 0.92 : 0.58)}px ${accent.replace("ALPHA", isStrong ? "0.32" : "0.18")}, inset -8px -10px ${nodeSize * 0.35}px rgba(0,0,0,0.32)`
+                    : "inset -6px -8px 14px rgba(0,0,0,0.26)",
+                }}
+              >
+                {hasEvents && (
+                  <span className="h-1.5 w-1.5 rounded-full bg-white/85 shadow-[0_0_10px_rgba(255,255,255,0.7)]" />
+                )}
+              </button>
 
+              <div
+                className="pointer-events-none absolute left-1/2 z-0 -translate-x-1/2"
+                style={{ top: labelOffset, width: labelWidth, opacity: reveal }}
+              >
+                {showLabelCard ? (
                   <div
-                    className="pointer-events-none absolute left-1/2 z-0 -translate-x-1/2"
-                    style={{ top: labelOffset, width: labelWidth }}
+                    className={`rounded-2xl border px-3 py-2 text-center backdrop-blur-xl transition-all duration-300 ${
+                      isFocused
+                        ? "border-cosmos-gold/34 bg-[#0a0b17]/76 shadow-[0_18px_54px_rgba(212,168,83,0.18)]"
+                        : hasEvents
+                          ? "border-white/[0.07] bg-[#080a16]/54 shadow-[0_14px_38px_rgba(0,0,0,0.28)]"
+                          : "border-white/[0.035] bg-white/[0.018]"
+                    }`}
                   >
-                    {showLabelCard ? (
-                      <div className={`rounded-2xl border px-3 py-2 text-center backdrop-blur-xl transition-all duration-300 ${
-                        isFocused
-                          ? "border-cosmos-gold/34 bg-[#0a0b17]/76 shadow-[0_18px_54px_rgba(212,168,83,0.18)]"
-                          : hasEvents
-                            ? "border-white/[0.07] bg-[#080a16]/54 shadow-[0_14px_38px_rgba(0,0,0,0.28)]"
-                            : "border-white/[0.035] bg-white/[0.018]"
-                      }`}>
-                        <div className="flex items-center justify-center gap-2">
-                          <span className={`font-mono leading-none ${node.unit === "year" ? "text-lg" : node.unit === "month" ? "text-sm" : "text-[11px]"} ${hasEvents || node.unit === "year" ? "text-cosmos-text" : "text-cosmos-text-dim/45"}`}>
-                            {node.label}
-                          </span>
-                          {hasEvents && node.unit !== "day" && (
-                            <span className="rounded-full bg-cosmos-gold/10 px-1.5 py-0.5 font-mono text-[9px] text-cosmos-gold">
-                              {node.eventCount}
-                            </span>
-                          )}
-                        </div>
-                        {isFocused && node.subLabel && (
-                          <p className="mt-1 truncate text-[9px] text-cosmos-text-dim">{node.subLabel}</p>
-                        )}
-                        {hasEvents && (
-                          <div className="mt-2 h-0.5 overflow-hidden rounded-full bg-white/[0.08]">
-                            <div
-                              className="h-full rounded-full bg-gradient-to-r from-cosmos-blue via-cosmos-gold to-cosmos-accent"
-                              style={{ width: `${node.maxImpact}%` }}
-                            />
-                          </div>
-                        )}
+                    <div className="flex items-center justify-center gap-2">
+                      <span
+                        className={`font-mono leading-none ${node.unit === "year" ? "text-lg" : node.unit === "month" ? "text-sm" : "text-[11px]"} ${hasEvents || node.unit === "year" ? "text-cosmos-text" : "text-cosmos-text-dim/45"}`}
+                      >
+                        {node.label}
+                      </span>
+                      {hasEvents && node.unit !== "day" && (
+                        <span className="rounded-full bg-cosmos-gold/10 px-1.5 py-0.5 font-mono text-[9px] text-cosmos-gold">
+                          {node.eventCount}
+                        </span>
+                      )}
+                    </div>
+                    {isFocused && node.subLabel && (
+                      <p className="mt-1 truncate text-[9px] text-cosmos-text-dim">
+                        {node.subLabel}
+                      </p>
+                    )}
+                    {hasEvents && (
+                      <div className="mt-2 h-0.5 overflow-hidden rounded-full bg-white/[0.08]">
+                        <div
+                          className="h-full rounded-full bg-gradient-to-r from-cosmos-blue via-cosmos-gold to-cosmos-accent"
+                          style={{ width: `${node.maxImpact}%` }}
+                        />
                       </div>
-                    ) : (
-                      <span className="font-mono text-[11px] text-cosmos-text-dim/40">{node.label}</span>
                     )}
                   </div>
-                </div>
-              );
-            })}
-          </motion.div>
-        </AnimatePresence>
+                ) : (
+                  <span className="font-mono text-[11px] text-cosmos-text-dim/40">
+                    {node.label}
+                  </span>
+                )}
+              </div>
+            </motion.div>
+          );
+        })}
       </div>
 
       <AnimatePresence>
@@ -835,19 +1252,30 @@ export function Timeline({
               </span>
             </div>
             <div className="mt-3 space-y-2">
-              {hoveredNode.events.length > 0 ? hoveredNode.events.slice(0, 3).map((event) => (
-                <div key={event.id} className="rounded-2xl bg-white/[0.04] px-3 py-2">
-                  <p className="truncate text-xs text-cosmos-text">{event.title}</p>
-                  <p className="mt-1 font-mono text-[9px] text-cosmos-text-dim">
-                    {format(parseISO(event.event_date), "yyyy.MM.dd")}
-                  </p>
-                </div>
-              )) : (
-                <p className="rounded-2xl bg-white/[0.04] px-3 py-2 text-xs text-cosmos-text-dim">当前星球暂无事件</p>
+              {hoveredNode.events.length > 0 ? (
+                hoveredNode.events.slice(0, 3).map((event) => (
+                  <div
+                    key={event.id}
+                    className="rounded-2xl bg-white/[0.04] px-3 py-2"
+                  >
+                    <p className="truncate text-xs text-cosmos-text">
+                      {event.title}
+                    </p>
+                    <p className="mt-1 font-mono text-[9px] text-cosmos-text-dim">
+                      {format(parseISO(event.event_date), "yyyy.MM.dd")}
+                    </p>
+                  </div>
+                ))
+              ) : (
+                <p className="rounded-2xl bg-white/[0.04] px-3 py-2 text-xs text-cosmos-text-dim">
+                  当前星球暂无事件
+                </p>
               )}
             </div>
             {hoveredNode.events.length > 3 && (
-              <p className="mt-2 text-[10px] text-cosmos-text-dim">+{hoveredNode.events.length - 3} 更多事件</p>
+              <p className="mt-2 text-[10px] text-cosmos-text-dim">
+                +{hoveredNode.events.length - 3} 更多事件
+              </p>
             )}
           </motion.div>
         )}
