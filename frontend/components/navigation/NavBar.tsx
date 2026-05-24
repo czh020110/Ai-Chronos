@@ -4,9 +4,22 @@ import { motion } from "framer-motion";
 
 interface NavBarProps {
   onSearchOpen: () => void;
+  stats: {
+    span: string;
+    eventCount: number;
+    highImpact: number;
+    categoryCount: number;
+  };
 }
 
-export function NavBar({ onSearchOpen }: NavBarProps) {
+const metrics = [
+  { key: "span", label: "Range" },
+  { key: "eventCount", label: "Events" },
+  { key: "highImpact", label: "High Impact" },
+  { key: "categoryCount", label: "Domains" },
+] as const;
+
+export function NavBar({ onSearchOpen, stats }: NavBarProps) {
   return (
     <motion.header
       initial={{ y: -28, opacity: 0 }}
@@ -14,8 +27,8 @@ export function NavBar({ onSearchOpen }: NavBarProps) {
       transition={{ duration: 0.65, ease: "easeOut" }}
       className="fixed left-4 right-4 top-4 z-50 flex items-center justify-between rounded-[28px] border border-white/[0.08] bg-[#050711]/62 px-4 py-3 shadow-[0_18px_70px_rgba(0,0,0,0.42)] backdrop-blur-2xl md:left-6 md:right-6 md:px-5"
     >
-      <div className="flex items-center gap-4">
-        <div className="relative h-11 w-11 overflow-hidden rounded-2xl border border-cosmos-gold/20 bg-cosmos-gold/10 shadow-[0_0_34px_rgba(212,168,83,0.12)]">
+      <div className="flex min-w-0 items-center gap-4">
+        <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-2xl border border-cosmos-gold/20 bg-cosmos-gold/10 shadow-[0_0_34px_rgba(212,168,83,0.12)]">
           <motion.div
             className="absolute inset-1 rounded-full border border-cosmos-gold/35"
             animate={{ rotate: 360 }}
@@ -27,7 +40,7 @@ export function NavBar({ onSearchOpen }: NavBarProps) {
             transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
           />
         </div>
-        <div>
+        <div className="min-w-0 shrink-0">
           <div className="flex items-baseline gap-2">
             <h1 className="font-display text-lg tracking-[-0.02em] text-cosmos-text md:text-xl">
               AI Chronos
@@ -40,9 +53,18 @@ export function NavBar({ onSearchOpen }: NavBarProps) {
             INTELLIGENCE EVOLUTION ATLAS
           </p>
         </div>
+
+        <div className="hidden items-center gap-2 border-l border-white/[0.08] pl-4 lg:flex">
+          {metrics.map(({ key, label }) => (
+            <div key={key} className="rounded-2xl border border-white/[0.06] bg-white/[0.035] px-3 py-1.5">
+              <span className="block font-mono text-[9px] uppercase tracking-[0.18em] text-cosmos-text-dim/75">{label}</span>
+              <strong className="mt-0.5 block font-mono text-xs text-cosmos-text">{stats[key]}</strong>
+            </div>
+          ))}
+        </div>
       </div>
 
-      <nav className="hidden items-center gap-1 rounded-full border border-white/[0.06] bg-white/[0.035] p-1 md:flex">
+      <nav className="hidden items-center gap-1 rounded-full border border-white/[0.06] bg-white/[0.035] p-1 xl:flex">
         <button className="rounded-full bg-cosmos-gold/12 px-4 py-2 text-xs tracking-wider text-cosmos-gold shadow-[inset_0_0_0_1px_rgba(212,168,83,0.16)]" aria-label="时间线视图">
           时间线
         </button>

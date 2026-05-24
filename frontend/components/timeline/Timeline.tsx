@@ -2,27 +2,32 @@
 
 import { useRef, useEffect, useCallback, useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { AIEvent, ViewMode, DrillState } from "@/lib/types";
+import { AIEvent, TimelineFocus, TimelineScale, TimelineUnit, ViewMode } from "@/lib/types";
 import { format, parseISO, getDaysInMonth } from "date-fns";
 
 interface TimelineProps {
   events: AIEvent[];
-  drill: DrillState;
+  timelineScale: TimelineScale;
   viewMode: ViewMode;
+  onTimelineScaleChange: (scale: TimelineScale) => void;
+  onFocusChange: (focus: TimelineFocus | null) => void;
   onNodeClick: (event: AIEvent) => void;
-  onDrillDown: (year: number, month?: number) => void;
   highlightedId: string | null;
 }
+
+type TimeUnit = TimelineUnit;
 
 interface RenderNode {
   key: string;
   x: number;
-  y: number;
+  angle: number;
+  radius: number;
   label: string;
   subLabel?: string;
-  isDrillable: boolean;
+  unit: TimeUnit;
   year: number;
   month?: number;
+  day?: number;
   events: AIEvent[];
   maxImpact: number;
   eventCount: number;
@@ -33,34 +38,69 @@ const monthNames = [
   "7月", "8月", "9月", "10月", "11月", "12月",
 ];
 
-const levelMeta = {
-  year: {
-    title: "纪年星图",
-    subtitle: "点击年份进入月度透镜，观察 AI 事件如何在不同周期聚集。",
-    code: "YEAR ATLAS",
+const scaleOptions: {
+  key: TimelineScale;
+  label: string;
+  title: string;
+  subtitle: string;
+  code: string;
+}[] = [
+  {
+    key: "year",
+    label: "只看年份",
+    title: "纪年星球",
+    subtitle: "只显示年份核心星球，快速观察宏观年份密度。",
+    code: "Y",
   },
-  month: {
-    title: "月度透镜",
-    subtitle: "点击有事件的月份，进入日级轨迹并查看具体事件。",
-    code: "MONTH LENS",
+  {
+    key: "month",
+    label: "年 + 月",
+    title: "年月螺旋",
+    subtitle: "滚轮与方向键逐星球吸附，螺旋随选中星球转动，高亮星球始终置前。",
+    code: "Y + M",
   },
-  day: {
-    title: "日级轨迹",
-    subtitle: "点击发光节点打开事件档案，阅读 Markdown 详情与来源。",
-    code: "DAY TRACE",
+  {
+    key: "day",
+    label: "年 + 月 + 日",
+    title: "全息日迹",
+    subtitle: "在年月螺旋上叠加日级事件星点，查看具体事件落点。",
+    code: "Y + M + D",
   },
+];
+
+const unitCopy: Record<TimeUnit, string> = {
+  year: "年份主星",
+  month: "月份星球",
+  day: "日级星点",
 };
+
+function eventImpact(events: AIEvent[]) {
+  return events.length > 0 ? Math.max(...events.map((event) => event.impact_score)) : 0;
+}
+
+function focusFromNode(node: RenderNode): TimelineFocus {
+  return {
+    key: node.key,
+    unit: node.unit,
+    unitLabel: unitCopy[node.unit],
+    label: node.label,
+    subLabel: node.subLabel,
+    eventCount: node.eventCount,
+    maxImpact: node.maxImpact,
+    events: node.events,
+  };
+}
 
 function TimelineCanvas({
   scrollX,
-  drill,
-  nodes,
+  globalRotation,
+  timelineScale,
   winW,
   winH,
 }: {
   scrollX: number;
-  drill: DrillState;
-  nodes: RenderNode[];
+  globalRotation: number;
+  timelineScale: TimelineScale;
   winW: number;
   winH: number;
 }) {
@@ -79,110 +119,64 @@ function TimelineCanvas({
 
     const width = canvas.offsetWidth;
     const height = canvas.offsetHeight;
-    const midY = height / 2;
-    const time = Date.now();
+    const axisY = Math.max(350, height * 0.6);
 
     ctx.clearRect(0, 0, width, height);
 
-    const horizon = ctx.createLinearGradient(0, midY - 210, 0, midY + 210);
+    const horizon = ctx.createLinearGradient(0, axisY - 210, 0, axisY + 210);
     horizon.addColorStop(0, "rgba(91,141,239,0)");
-    horizon.addColorStop(0.36, "rgba(91,141,239,0.08)");
-    horizon.addColorStop(0.5, "rgba(240,192,96,0.18)");
-    horizon.addColorStop(0.64, "rgba(139,92,246,0.09)");
+    horizon.addColorStop(0.42, "rgba(91,141,239,0.055)");
+    horizon.addColorStop(0.5, timelineScale === "day" ? "rgba(240,192,96,0.18)" : "rgba(240,192,96,0.13)");
+    horizon.addColorStop(0.58, "rgba(139,92,246,0.06)");
     horizon.addColorStop(1, "rgba(91,141,239,0)");
     ctx.fillStyle = horizon;
-    ctx.fillRect(0, midY - 210, width, 420);
+    ctx.fillRect(0, axisY - 210, width, 420);
 
     ctx.save();
-    ctx.globalCompositeOperation = "screen";
-    for (let layer = 0; layer < 5; layer++) {
-      ctx.beginPath();
-      const amp = 10 + layer * 13;
-      const phase = scrollX * 0.005 + layer * 1.4 + time * 0.00045;
-      ctx.moveTo(-60, midY + Math.sin(phase) * amp);
-      for (let x = -60; x <= width + 80; x += 40) {
-        const y = midY + Math.sin(x * 0.012 + phase) * amp + Math.cos(x * 0.006 + phase * 0.7) * amp * 0.5;
-        ctx.lineTo(x, y);
-      }
-      ctx.strokeStyle = layer % 2 === 0
-        ? `rgba(240,192,96,${0.09 - layer * 0.01})`
-        : `rgba(91,141,239,${0.08 - layer * 0.008})`;
-      ctx.lineWidth = 34 - layer * 5;
-      ctx.shadowBlur = 24;
-      ctx.shadowColor = layer % 2 === 0 ? "rgba(240,192,96,0.24)" : "rgba(91,141,239,0.22)";
-      ctx.stroke();
-    }
-    ctx.restore();
-
-    ctx.save();
-    ctx.strokeStyle = "rgba(240,192,96,0.48)";
-    ctx.lineWidth = 1.2;
-    ctx.shadowBlur = 18;
+    ctx.strokeStyle = "rgba(240,192,96,0.42)";
+    ctx.lineWidth = 1;
+    ctx.shadowBlur = 22;
     ctx.shadowColor = "rgba(240,192,96,0.36)";
     ctx.beginPath();
-    ctx.moveTo(0, midY);
-    ctx.lineTo(width, midY);
+    ctx.moveTo(0, axisY);
+    ctx.lineTo(width, axisY);
     ctx.stroke();
     ctx.restore();
 
-    const tickAlpha = drill.level === "year" ? 0.09 : drill.level === "month" ? 0.07 : 0.045;
-    for (const node of nodes) {
-      const x = node.x - scrollX;
-      if (x < -80 || x > width + 80) continue;
-      const major = node.eventCount > 0;
-
-      ctx.strokeStyle = major ? `rgba(240,192,96,${tickAlpha + 0.08})` : `rgba(255,255,255,${tickAlpha})`;
-      ctx.lineWidth = major ? 1 : 0.6;
+    ctx.save();
+    ctx.globalCompositeOperation = "screen";
+    const step = timelineScale === "year" ? 0.009 : timelineScale === "month" ? 0.014 : 0.016;
+    const radius = timelineScale === "year" ? 104 : timelineScale === "month" ? 148 : 178;
+    for (const rail of [0, Math.PI]) {
       ctx.beginPath();
-      ctx.moveTo(x, midY - (major ? 52 : 24));
-      ctx.lineTo(x, midY + (major ? 52 : 24));
+      for (let x = -90; x <= width + 90; x += 18) {
+        const worldX = x + scrollX;
+        const phase = worldX * step + rail + globalRotation;
+        const y = axisY + Math.sin(phase) * radius;
+        if (x === -90) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.strokeStyle = rail === 0 ? "rgba(91,141,239,0.19)" : "rgba(240,192,96,0.11)";
+      ctx.lineWidth = rail === 0 ? 1.15 : 0.8;
+      ctx.shadowBlur = rail === 0 ? 18 : 12;
+      ctx.shadowColor = rail === 0 ? "rgba(91,141,239,0.28)" : "rgba(240,192,96,0.2)";
       ctx.stroke();
-
-      if (major) {
-        const radius = drill.level === "year" ? 54 : drill.level === "month" ? 42 : 28;
-        const gradient = ctx.createRadialGradient(x, midY, 0, x, midY, radius);
-        gradient.addColorStop(0, "rgba(240,192,96,0.12)");
-        gradient.addColorStop(0.48, "rgba(91,141,239,0.055)");
-        gradient.addColorStop(1, "rgba(255,255,255,0)");
-        ctx.fillStyle = gradient;
-        ctx.beginPath();
-        ctx.arc(x, midY, radius, 0, Math.PI * 2);
-        ctx.fill();
-      }
     }
+    ctx.restore();
 
-    const dotSpacing = drill.level === "day" ? 18 : 28;
-    const startX = -(scrollX % dotSpacing);
-    for (let x = startX; x < width; x += dotSpacing) {
-      const pulse = 0.38 + 0.62 * Math.abs(Math.sin((x + scrollX) * 0.035 + time * 0.0012));
-      ctx.beginPath();
-      ctx.arc(x, midY, 0.9 + pulse * 0.9, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(240,192,96,${0.045 + pulse * 0.06})`;
-      ctx.fill();
-    }
+    ctx.save();
+    ctx.globalCompositeOperation = "screen";
+    const centerGlow = ctx.createRadialGradient(width / 2, axisY, 0, width / 2, axisY, 170);
+    centerGlow.addColorStop(0, "rgba(255,236,180,0.28)");
+    centerGlow.addColorStop(0.18, "rgba(240,192,96,0.13)");
+    centerGlow.addColorStop(0.58, "rgba(91,141,239,0.055)");
+    centerGlow.addColorStop(1, "rgba(255,255,255,0)");
+    ctx.fillStyle = centerGlow;
+    ctx.fillRect(width / 2 - 190, axisY - 190, 380, 380);
+    ctx.restore();
+  }, [scrollX, globalRotation, timelineScale, winW, winH]);
 
-    if (drill.level === "year") {
-      const markerX = (2026 - 2012) * 172 + Math.max(170, winW * 0.17) - scrollX;
-      if (markerX > 0 && markerX < width) {
-        const pulse = 0.5 + 0.5 * Math.sin(time * 0.004);
-        ctx.save();
-        ctx.setLineDash([3, 9]);
-        ctx.strokeStyle = `rgba(240,192,96,${0.18 + pulse * 0.12})`;
-        ctx.beginPath();
-        ctx.moveTo(markerX, midY - 96);
-        ctx.lineTo(markerX, midY + 96);
-        ctx.stroke();
-        ctx.restore();
-
-        ctx.fillStyle = `rgba(240,192,96,${0.16 + pulse * 0.22})`;
-        ctx.beginPath();
-        ctx.arc(markerX, midY, 9 + pulse * 7, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
-  }, [scrollX, drill, nodes, winW, winH]);
-
-  return <canvas ref={canvasRef} className="absolute inset-0 h-full w-full pointer-events-none" />;
+  return <canvas ref={canvasRef} className="pointer-events-none absolute inset-0 h-full w-full" />;
 }
 
 function GridView({
@@ -195,7 +189,7 @@ function GridView({
   highlightedId: string | null;
 }) {
   return (
-    <div className="absolute inset-x-0 bottom-0 top-24 z-20 overflow-y-auto px-5 pb-28 xl:left-[410px] 2xl:right-[335px]">
+    <div className="absolute inset-x-0 bottom-0 top-24 z-20 overflow-y-auto px-5 pb-28 2xl:right-[335px]">
       <div className="mx-auto grid max-w-6xl grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
         {events.map((event, index) => (
           <motion.button
@@ -260,7 +254,7 @@ function ListView({
   highlightedId: string | null;
 }) {
   return (
-    <div className="absolute inset-x-0 bottom-0 top-24 z-20 overflow-y-auto px-5 pb-28 xl:left-[430px] 2xl:right-[355px]">
+    <div className="absolute inset-x-0 bottom-0 top-24 z-20 overflow-y-auto px-5 pb-28 2xl:right-[355px]">
       <div className="mx-auto max-w-4xl space-y-3">
         {events.map((event, index) => (
           <motion.button
@@ -277,7 +271,7 @@ function ListView({
           >
             <div className="font-mono text-right">
               <span className="block text-sm text-cosmos-gold">{format(parseISO(event.event_date), "yyyy")}</span>
-              <span className="text-[10px] tracking-[0.16em] text-cosmos-text-dim">{format(parseISO(event.event_date), "MM.DD")}</span>
+              <span className="text-[10px] tracking-[0.16em] text-cosmos-text-dim">{format(parseISO(event.event_date), "MM.dd")}</span>
             </div>
             <div className="min-w-0">
               <h3 className="truncate text-sm text-cosmos-text transition-colors group-hover:text-cosmos-gold">
@@ -303,22 +297,30 @@ function ListView({
 
 export function Timeline({
   events,
-  drill,
+  timelineScale,
   viewMode,
+  onTimelineScaleChange,
+  onFocusChange,
   onNodeClick,
-  onDrillDown,
   highlightedId,
 }: TimelineProps) {
   const [scrollX, setScrollX] = useState(0);
+  const [selectedIndex, setSelectedIndex] = useState(0);
   const [hoveredNode, setHoveredNode] = useState<RenderNode | null>(null);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
   const [winW, setWinW] = useState(1200);
   const [winH, setWinH] = useState(800);
+  const [globalRotation, setGlobalRotation] = useState(0);
+  const lastFocusKey = useRef<string | null>(null);
   const isDragging = useRef(false);
   const lastX = useRef(0);
+  const dragDelta = useRef(0);
   const animRef = useRef<number | null>(null);
   const targetScrollX = useRef(0);
   const currentScrollX = useRef(0);
+  const targetRotation = useRef(0);
+  const currentRotation = useRef(0);
+  const wheelLockedUntil = useRef(0);
 
   useEffect(() => {
     setWinW(window.innerWidth);
@@ -331,113 +333,151 @@ export function Timeline({
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
+  const yearRange = useMemo(() => {
+    const years = events.map((event) => parseISO(event.event_date).getFullYear());
+    const min = Math.min(...years);
+    const max = Math.max(...years);
+    return Array.from({ length: max - min + 1 }, (_, index) => min + index);
+  }, [events]);
+
   const nodes = useMemo<RenderNode[]>(() => {
-    const leftPad = Math.max(170, winW * 0.17);
+    const byYear = new Map<number, AIEvent[]>();
+    const byMonth = new Map<string, AIEvent[]>();
+    const byDay = new Map<string, AIEvent[]>();
 
-    if (drill.level === "year") {
-      const map = new Map<number, AIEvent[]>();
-      for (const event of events) {
-        const year = parseISO(event.event_date).getFullYear();
-        map.set(year, [...(map.get(year) ?? []), event]);
-      }
-      return Array.from(map.entries())
-        .sort(([a], [b]) => a - b)
-        .map(([year, evts], index) => ({
-          key: `y-${year}`,
-          x: (year - 2012) * 172 + leftPad,
-          y: index % 2 === 0 ? -108 : 100,
-          label: String(year),
-          subLabel: `${evts.length} 个事件`,
-          isDrillable: true,
-          year,
-          events: evts.sort((a, b) => b.impact_score - a.impact_score),
-          maxImpact: Math.max(...evts.map((event) => event.impact_score)),
-          eventCount: evts.length,
-        }));
+    for (const event of events) {
+      const date = parseISO(event.event_date);
+      const year = date.getFullYear();
+      const month = date.getMonth();
+      const day = date.getDate();
+      const monthKey = `${year}-${month}`;
+      const dayKey = `${year}-${month}-${day}`;
+      byYear.set(year, [...(byYear.get(year) ?? []), event]);
+      byMonth.set(monthKey, [...(byMonth.get(monthKey) ?? []), event]);
+      byDay.set(dayKey, [...(byDay.get(dayKey) ?? []), event]);
     }
 
-    if (drill.level === "month" && drill.year !== null) {
-      const map = new Map<number, AIEvent[]>();
-      for (const event of events) {
-        const date = parseISO(event.event_date);
-        if (date.getFullYear() !== drill.year) continue;
-        const month = date.getMonth();
-        map.set(month, [...(map.get(month) ?? []), event]);
-      }
-      const spacing = Math.max(106, winW / 11.5);
-      return Array.from({ length: 12 }, (_, month) => {
-        const evts = (map.get(month) ?? []).sort((a, b) => b.impact_score - a.impact_score);
-        return {
-          key: `m-${drill.year}-${month}`,
-          x: month * spacing + Math.max(130, winW * 0.1),
-          y: month % 2 === 0 ? -92 : 92,
+    const stepX = timelineScale === "year" ? 310 : timelineScale === "month" ? 78 : 84;
+    const helixRadius = timelineScale === "year" ? 120 : timelineScale === "month" ? 160 : 190;
+    const leftPad = winW / 2;
+    const renderNodes: RenderNode[] = [];
+
+    const freq = timelineScale === "year" ? 0.96 : 0.58;
+
+    for (const [yearIndex, year] of yearRange.entries()) {
+      const yearEvents = (byYear.get(year) ?? []).sort((a, b) => b.impact_score - a.impact_score);
+      const yearOrdinal = timelineScale === "year" ? yearIndex : yearIndex * 12 + 5.5;
+      const yearRadius = helixRadius * 0.72;
+      renderNodes.push({
+        key: `year-${year}`,
+        x: leftPad + yearOrdinal * stepX,
+        angle: yearOrdinal * freq,
+        radius: yearRadius,
+        label: String(year),
+        subLabel: yearEvents.length > 0 ? `${yearEvents.length} 个事件` : "低活动年",
+        unit: "year",
+        year,
+        events: yearEvents,
+        maxImpact: eventImpact(yearEvents),
+        eventCount: yearEvents.length,
+      });
+
+      if (timelineScale === "year") continue;
+
+      for (let month = 0; month < 12; month += 1) {
+        const monthEvents = (byMonth.get(`${year}-${month}`) ?? []).sort((a, b) => b.impact_score - a.impact_score);
+        const monthOrdinal = yearIndex * 12 + month;
+        renderNodes.push({
+          key: `month-${year}-${month}`,
+          x: leftPad + monthOrdinal * stepX,
+          angle: monthOrdinal * freq,
+          radius: helixRadius,
           label: monthNames[month],
-          subLabel: evts.length > 0 ? `${evts.length} 个事件` : "静默区间",
-          isDrillable: evts.length > 0,
-          year: drill.year!,
+          subLabel: monthEvents.length > 0 ? `${year} 年 ${monthNames[month]} · ${monthEvents.length} 个事件` : `${year} 年 ${monthNames[month]} · 暂无事件`,
+          unit: "month",
+          year,
           month,
-          events: evts,
-          maxImpact: evts.length > 0 ? Math.max(...evts.map((event) => event.impact_score)) : 0,
-          eventCount: evts.length,
-        };
-      });
-    }
-
-    if (drill.level === "day" && drill.year !== null && drill.month !== null) {
-      const daysInMonth = getDaysInMonth(new Date(drill.year, drill.month, 1));
-      const map = new Map<number, AIEvent[]>();
-      for (const event of events) {
-        const date = parseISO(event.event_date);
-        if (date.getFullYear() !== drill.year || date.getMonth() !== drill.month) continue;
-        const day = date.getDate();
-        map.set(day, [...(map.get(day) ?? []), event]);
+          events: monthEvents,
+          maxImpact: eventImpact(monthEvents),
+          eventCount: monthEvents.length,
+        });
       }
-      const spacing = Math.max(58, winW / Math.min(daysInMonth + 3, 19));
-      return Array.from({ length: daysInMonth }, (_, index) => {
-        const day = index + 1;
-        const evts = (map.get(day) ?? []).sort((a, b) => b.impact_score - a.impact_score);
-        return {
-          key: `d-${drill.year}-${drill.month}-${day}`,
-          x: day * spacing + Math.max(70, winW * 0.06),
-          y: day % 2 === 0 ? -72 : 72,
-          label: `${day}`,
-          subLabel: evts.length > 0 ? evts[0].title : undefined,
-          isDrillable: false,
-          year: drill.year!,
-          month: drill.month!,
-          events: evts,
-          maxImpact: evts.length > 0 ? Math.max(...evts.map((event) => event.impact_score)) : 0,
-          eventCount: evts.length,
-        };
-      });
     }
 
-    return [];
-  }, [events, drill, winW]);
+    if (timelineScale === "day") {
+      Array.from(byDay.entries())
+        .sort(([a], [b]) => a.localeCompare(b))
+        .forEach(([key, dayEvents]) => {
+          const [yearText, monthText, dayText] = key.split("-");
+          const year = Number(yearText);
+          const month = Number(monthText);
+          const day = Number(dayText);
+          const yearIndex = yearRange.indexOf(year);
+          if (yearIndex < 0) return;
+          const daysInMonth = getDaysInMonth(new Date(year, month, 1));
+          const dayOrdinal = yearIndex * 12 + month + (day - 1) / daysInMonth;
+          renderNodes.push({
+            key: `day-${key}`,
+            x: leftPad + dayOrdinal * stepX,
+            angle: dayOrdinal * freq,
+            radius: helixRadius * 1.08,
+            label: String(day).padStart(2, "0"),
+            subLabel: dayEvents[0]?.title,
+            unit: "day",
+            year,
+            month,
+            day,
+            events: dayEvents.sort((a, b) => b.impact_score - a.impact_score),
+            maxImpact: eventImpact(dayEvents),
+            eventCount: dayEvents.length,
+          });
+        });
+    }
+
+    return renderNodes.sort((a, b) => a.x - b.x || a.unit.localeCompare(b.unit));
+  }, [events, timelineScale, winW, yearRange]);
 
   const totalWidth = useMemo(() => {
     if (nodes.length === 0) return winW;
-    return Math.max(winW, Math.max(...nodes.map((node) => node.x)) + Math.max(260, winW * 0.16));
+    return Math.max(winW, Math.max(...nodes.map((node) => node.x)) + winW / 2);
   }, [nodes, winW]);
 
   const maxScroll = Math.max(0, totalWidth - winW);
+  const focusedNode = nodes[selectedIndex] ?? null;
 
   const startAnim = useCallback(() => {
     if (animRef.current) return;
     const animate = () => {
-      const diff = targetScrollX.current - currentScrollX.current;
-      if (Math.abs(diff) < 0.3) {
+      const scrollDiff = targetScrollX.current - currentScrollX.current;
+      const rotDiff = targetRotation.current - currentRotation.current;
+
+      if (Math.abs(scrollDiff) < 0.22 && Math.abs(rotDiff) < 0.0005) {
         currentScrollX.current = targetScrollX.current;
+        currentRotation.current = targetRotation.current;
         setScrollX(targetScrollX.current);
+        setGlobalRotation(targetRotation.current);
         animRef.current = null;
         return;
       }
-      currentScrollX.current += diff * 0.09;
+
+      currentScrollX.current += scrollDiff * 0.14;
+      currentRotation.current += rotDiff * 0.14;
       setScrollX(currentScrollX.current);
+      setGlobalRotation(currentRotation.current);
       animRef.current = requestAnimationFrame(animate);
     };
     animRef.current = requestAnimationFrame(animate);
   }, []);
+
+  const stepFocus = useCallback((direction: number) => {
+    if (nodes.length === 0) return;
+    setSelectedIndex((index) => Math.max(0, Math.min(index + direction, nodes.length - 1)));
+  }, [nodes.length]);
+
+  const selectNode = useCallback((node: RenderNode) => {
+    const nextIndex = nodes.findIndex((item) => item.key === node.key);
+    if (nextIndex >= 0) setSelectedIndex(nextIndex);
+  }, [nodes]);
 
   useEffect(() => {
     return () => {
@@ -447,10 +487,30 @@ export function Timeline({
   }, []);
 
   useEffect(() => {
-    targetScrollX.current = 0;
-    currentScrollX.current = 0;
-    setScrollX(0);
-  }, [drill.level, drill.year, drill.month]);
+    if (nodes.length === 0) return;
+    const firstEventIndex = nodes.findIndex((node) => node.eventCount > 0);
+    setSelectedIndex(firstEventIndex >= 0 ? firstEventIndex : 0);
+    lastFocusKey.current = null;
+  }, [timelineScale, nodes.length]);
+
+  useEffect(() => {
+    if (nodes.length === 0) return;
+    setSelectedIndex((index) => Math.max(0, Math.min(index, nodes.length - 1)));
+  }, [nodes.length]);
+
+  useEffect(() => {
+    if (!focusedNode) return;
+    const nextTarget = Math.max(0, Math.min(focusedNode.x - winW / 2, maxScroll));
+    targetScrollX.current = nextTarget;
+
+    const rawTarget = -focusedNode.angle;
+    const diff = rawTarget - currentRotation.current;
+    const twoPi = 2 * Math.PI;
+    const wrappedDiff = diff - Math.round(diff / twoPi) * twoPi;
+    targetRotation.current = currentRotation.current + wrappedDiff;
+
+    startAnim();
+  }, [focusedNode, maxScroll, startAnim, winW]);
 
   useEffect(() => {
     targetScrollX.current = Math.max(0, Math.min(targetScrollX.current, maxScroll));
@@ -458,43 +518,75 @@ export function Timeline({
     setScrollX((value) => Math.max(0, Math.min(value, maxScroll)));
   }, [maxScroll]);
 
-  const moveTarget = useCallback((delta: number) => {
-    targetScrollX.current = Math.max(0, Math.min(targetScrollX.current + delta, maxScroll));
-    startAnim();
-  }, [maxScroll, startAnim]);
+  useEffect(() => {
+    if (!focusedNode) {
+      if (lastFocusKey.current !== null) {
+        lastFocusKey.current = null;
+        onFocusChange(null);
+      }
+      return;
+    }
+    if (lastFocusKey.current === focusedNode.key) return;
+    lastFocusKey.current = focusedNode.key;
+    onFocusChange(focusFromNode(focusedNode));
+  }, [focusedNode, onFocusChange]);
+
+  useEffect(() => {
+    if (viewMode !== "timeline") return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (target && ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName)) return;
+      if (event.key === "ArrowRight") {
+        event.preventDefault();
+        stepFocus(1);
+      }
+      if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        stepFocus(-1);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [stepFocus, viewMode]);
+
+  useEffect(() => {
+    if (viewMode !== "timeline") onFocusChange(null);
+  }, [onFocusChange, viewMode]);
 
   const handleWheel = useCallback((event: React.WheelEvent) => {
-    moveTarget(Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY);
-  }, [moveTarget]);
+    event.preventDefault();
+    const now = Date.now();
+    if (now < wheelLockedUntil.current) return;
+    stepFocus(event.deltaY > 0 ? 1 : -1);
+    wheelLockedUntil.current = now + 100;
+  }, [stepFocus]);
 
   const handleMouseDown = useCallback((event: React.MouseEvent) => {
     isDragging.current = true;
     lastX.current = event.clientX;
+    dragDelta.current = 0;
   }, []);
 
   const handleMouseMove = useCallback((event: React.MouseEvent) => {
     if (!isDragging.current) return;
     const delta = lastX.current - event.clientX;
     lastX.current = event.clientX;
-    moveTarget(delta);
-  }, [moveTarget]);
+    dragDelta.current += delta;
+    if (Math.abs(dragDelta.current) < 86) return;
+    stepFocus(dragDelta.current > 0 ? 1 : -1);
+    dragDelta.current = 0;
+  }, [stepFocus]);
 
   const handleMouseUp = useCallback(() => {
     isDragging.current = false;
+    dragDelta.current = 0;
   }, []);
 
   const openNode = useCallback((node: RenderNode) => {
+    selectNode(node);
     if (node.eventCount === 0) return;
-    if (node.isDrillable && drill.level === "year") {
-      onDrillDown(node.year);
-      return;
-    }
-    if (node.isDrillable && drill.level === "month") {
-      onDrillDown(node.year, node.month);
-      return;
-    }
     onNodeClick(node.events[0]);
-  }, [drill.level, onDrillDown, onNodeClick]);
+  }, [onNodeClick, selectNode]);
 
   if (viewMode === "grid") {
     return <GridView events={events} onNodeClick={onNodeClick} highlightedId={highlightedId} />;
@@ -504,8 +596,23 @@ export function Timeline({
     return <ListView events={events} onNodeClick={onNodeClick} highlightedId={highlightedId} />;
   }
 
-  const meta = levelMeta[drill.level];
-  const midY = winH / 2;
+  const meta = scaleOptions.find((option) => option.key === timelineScale) ?? scaleOptions[1];
+  const axisY = Math.max(350, winH * 0.6);
+
+  const visibleNodes = useMemo(() => {
+    return nodes
+      .map((node) => {
+        const angle = node.angle + globalRotation;
+        return {
+          node,
+          nodeX: node.x - scrollX,
+          renderY: Math.sin(angle) * node.radius,
+          renderZ: Math.cos(angle),
+        };
+      })
+      .filter(({ nodeX }) => nodeX > -230 && nodeX < winW + 230)
+      .sort((a, b) => a.renderZ - b.renderZ);
+  }, [nodes, scrollX, globalRotation, winW]);
 
   return (
     <div
@@ -516,156 +623,190 @@ export function Timeline({
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
     >
-      <TimelineCanvas scrollX={scrollX} drill={drill} nodes={nodes} winW={winW} winH={winH} />
+      <TimelineCanvas scrollX={scrollX} globalRotation={globalRotation} timelineScale={timelineScale} winW={winW} winH={winH} />
 
       <motion.div
-        key={`title-${drill.level}-${drill.year}-${drill.month}`}
-        initial={{ opacity: 0, y: -18, filter: "blur(10px)" }}
+        initial={{ opacity: 0, y: -16, filter: "blur(10px)" }}
         animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-        transition={{ duration: 0.55, ease: "easeOut" }}
-        className="pointer-events-none absolute left-5 top-[104px] z-20 max-w-[calc(100vw-40px)] xl:left-[430px]"
+        transition={{ duration: 0.45, ease: "easeOut" }}
+        className="pointer-events-auto absolute left-5 right-5 top-[96px] z-40 md:left-6 md:right-[330px] 2xl:right-[360px]"
       >
-        <div className="flex items-center gap-3">
-          <span className="rounded-full border border-cosmos-gold/20 bg-cosmos-gold/10 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.24em] text-cosmos-gold">
-            {meta.code}
-          </span>
-          <span className="hidden h-px w-24 bg-gradient-to-r from-cosmos-gold/50 to-transparent md:block" />
+        <div className="flex flex-col gap-3 rounded-[28px] border border-white/[0.08] bg-[#050711]/72 p-3 shadow-[0_22px_80px_rgba(0,0,0,0.38)] backdrop-blur-2xl lg:flex-row lg:items-center lg:justify-between lg:p-4">
+          <div className="min-w-0">
+            <div className="flex items-center gap-3">
+              <span className="rounded-full border border-cosmos-gold/20 bg-cosmos-gold/10 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.24em] text-cosmos-gold">
+                {meta.code}
+              </span>
+              <span className="hidden h-px w-16 bg-gradient-to-r from-cosmos-gold/50 to-transparent md:block" />
+            </div>
+            <h2 className="mt-2 font-display text-2xl leading-none tracking-[-0.04em] aurora-text md:text-3xl">
+              {meta.title}
+            </h2>
+            <p className="mt-1 max-w-2xl text-xs leading-5 text-cosmos-text-dim md:text-sm md:leading-6">{meta.subtitle}</p>
+          </div>
+
+          <div className="grid shrink-0 grid-cols-3 gap-2 rounded-[24px] border border-white/[0.08] bg-black/28 p-1.5 shadow-[inset_0_0_24px_rgba(255,255,255,0.03)]">
+            {scaleOptions.map((option) => {
+              const active = option.key === timelineScale;
+              return (
+                <button
+                  key={option.key}
+                  type="button"
+                  onClick={() => onTimelineScaleChange(option.key)}
+                  aria-pressed={active}
+                  className={`group relative overflow-hidden rounded-[18px] px-3 py-3 text-center transition-all duration-300 md:min-w-[118px] ${
+                    active
+                      ? "bg-cosmos-gold/16 text-cosmos-gold shadow-[0_0_32px_rgba(212,168,83,0.18)]"
+                      : "text-cosmos-text-dim hover:bg-white/[0.06] hover:text-cosmos-text"
+                  }`}
+                >
+                  <span className={`absolute inset-x-3 top-0 h-px bg-gradient-to-r from-transparent via-cosmos-gold/70 to-transparent transition-opacity ${active ? "opacity-100" : "opacity-0 group-hover:opacity-70"}`} />
+                  <span className="relative block font-mono text-[10px] uppercase tracking-[0.2em]">{option.code}</span>
+                  <span className="relative mt-1 block whitespace-nowrap text-xs tracking-wider">{option.label}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
-        <h2 className="mt-4 font-display text-4xl leading-none tracking-[-0.04em] aurora-text md:text-5xl">
-          {drill.level === "year" ? meta.title : drill.level === "month" ? `${drill.year} · ${meta.title}` : `${drill.year}.${(drill.month ?? 0) + 1} · ${meta.title}`}
-        </h2>
-        <p className="mt-3 max-w-xl text-sm leading-6 text-cosmos-text-dim">{meta.subtitle}</p>
       </motion.div>
 
-      <div className="pointer-events-none absolute inset-0" style={{ top: midY - 130 }}>
+      <div className="pointer-events-none absolute inset-0 overflow-hidden" style={{ perspective: 1100 }}>
+        <div className="absolute bottom-0 left-0 top-[170px] z-[70] w-[18vw] bg-gradient-to-r from-[#03040a] via-[#03040a]/50 to-transparent" />
+        <div className="absolute bottom-0 right-0 top-[170px] z-[70] w-[18vw] bg-gradient-to-l from-[#03040a] via-[#03040a]/50 to-transparent" />
+        <div className="absolute left-1/2 top-[18vh] z-30 h-[70vh] w-px -translate-x-1/2 bg-gradient-to-b from-transparent via-cosmos-gold/40 to-transparent shadow-[0_0_14px_rgba(240,192,96,0.35)]" />
+        <div
+          className="absolute left-1/2 z-30 h-24 w-[220px] -translate-x-1/2 -translate-y-1/2 bg-[radial-gradient(ellipse_at_center,rgba(255,238,190,0.42)_0%,rgba(240,192,96,0.14)_24%,rgba(91,141,239,0.07)_48%,transparent_72%)] blur-sm"
+          style={{ top: axisY }}
+        />
         <AnimatePresence mode="wait">
           <motion.div
-            key={`layer-${drill.level}-${drill.year}-${drill.month}`}
-            initial={{ opacity: 0, scale: 0.96, filter: "blur(18px)" }}
+            key={`helix-${timelineScale}`}
+            initial={{ opacity: 0, scale: 0.98, filter: "blur(12px)" }}
             animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
-            exit={{ opacity: 0, scale: 1.04, filter: "blur(18px)" }}
-            transition={{ duration: 0.48, ease: "easeOut" }}
+            exit={{ opacity: 0, scale: 1.02, filter: "blur(12px)" }}
+            transition={{ duration: 0.34, ease: "easeOut" }}
             className="absolute inset-0"
           >
-            {nodes.map((node, index) => {
-              const nodeX = node.x - scrollX;
-              const nodeY = 130 + node.y;
-              if (nodeX < -180 || nodeX > winW + 180) return null;
-
+            {visibleNodes.map(({ node, nodeX, renderY, renderZ }) => {
+              const depth = (renderZ + 1) / 2;
               const hasEvents = node.eventCount > 0;
+              const isFocused = focusedNode?.key === node.key;
               const isHighlighted = highlightedId != null && node.events.some((event) => event.id === highlightedId);
+              const density = Math.min(1, node.eventCount / 4);
               const isMajor = node.maxImpact >= 95;
-              const isStrong = node.maxImpact >= 85;
-              const nodeSize = drill.level === "year" ? (isMajor ? 20 : 15) : drill.level === "month" ? (isStrong ? 17 : 12) : (hasEvents ? 11 : 5);
-              const cardWidth = drill.level === "day" ? 150 : drill.level === "month" ? 168 : 190;
-              const cardOffset = node.y < 0 ? -106 : 28;
-              const accent = isMajor
+              const isStrong = node.maxImpact >= 85 || node.eventCount >= 2;
+              const baseSize = node.unit === "year" ? 40 : node.unit === "month" ? 20 : 11;
+              const depthSize = node.unit === "year" ? 14 : node.unit === "month" ? 8 : 4;
+              const nodeSize = baseSize + density * depthSize + depth * (node.unit === "year" ? 10 : node.unit === "month" ? 6 : 3);
+              const nodeY = axisY + renderY;
+              const scale = 0.66 + depth * 0.5 + (isFocused ? 0.24 : 0);
+              const labelOffset = renderY < 0 ? -50 : 38;
+              const labelWidth = node.unit === "year" ? 150 : node.unit === "month" ? 112 : 78;
+              const showLabelCard = isFocused || hasEvents || node.unit === "year";
+              const accent = node.unit === "year"
                 ? "rgba(240,192,96,ALPHA)"
-                : node.maxImpact >= 80
+                : node.unit === "month"
                   ? "rgba(91,141,239,ALPHA)"
                   : "rgba(139,92,246,ALPHA)";
+              const idleOpacity = isFocused ? 1 : node.unit !== "year" && !hasEvents ? 0.18 + depth * 0.22 : 0.58 + depth * 0.3;
 
               return (
-                <motion.div
+                <div
                   key={node.key}
-                  initial={{ opacity: 0, y: node.y < 0 ? -28 : 28, scale: 0.72, rotateX: node.y < 0 ? 18 : -18 }}
-                  animate={{ opacity: 1, y: 0, scale: 1, rotateX: 0 }}
-                  transition={{
-                    delay: index * (drill.level === "day" ? 0.012 : 0.035),
-                    duration: 0.52,
-                    type: "spring",
-                    stiffness: 210,
-                    damping: 22,
+                  className="pointer-events-auto absolute transition-[filter,opacity] duration-300"
+                  style={{
+                    left: nodeX,
+                    top: nodeY,
+                    opacity: idleOpacity,
+                    zIndex: Math.round(20 + depth * 60 + (isFocused ? 90 : 0)),
+                    transform: `translate(-50%, -50%) translateZ(${renderZ * 130}px) scale(${scale})`,
+                    filter: `blur(${Math.max(0, (1 - depth) * 0.8 - (isFocused ? 1 : 0))}px)`,
                   }}
-                  className="absolute pointer-events-auto"
-                  style={{ left: nodeX, top: nodeY, transform: "translate(-50%, -50%)" }}
                 >
-                  {hasEvents && (
-                    <>
-                      <motion.div
-                        className="absolute left-1/2 top-1/2 rounded-full border border-cosmos-gold/20"
-                        style={{ width: nodeSize * 4.7, height: nodeSize * 4.7, marginLeft: nodeSize * -2.35, marginTop: nodeSize * -2.35 }}
-                        animate={{ rotate: 360, scale: [1, 1.08, 1] }}
-                        transition={{ rotate: { duration: 18 + index, repeat: Infinity, ease: "linear" }, scale: { duration: 4, repeat: Infinity } }}
-                      />
-                      {isStrong && (
-                        <motion.div
-                          className="absolute left-1/2 top-1/2 rounded-full border border-cosmos-blue/18"
-                          style={{ width: nodeSize * 6.2, height: nodeSize * 6.2, marginLeft: nodeSize * -3.1, marginTop: nodeSize * -3.1 }}
-                          animate={{ rotate: -360 }}
-                          transition={{ duration: 24 + index * 0.5, repeat: Infinity, ease: "linear" }}
-                        />
-                      )}
-                    </>
+                  {hasEvents && (isFocused || isStrong) && (
+                    <motion.div
+                      className="absolute left-1/2 top-1/2 rounded-full border border-white/10"
+                      style={{
+                        width: nodeSize * (isFocused ? 2.45 : 1.85),
+                        height: nodeSize * (isFocused ? 2.45 : 1.85),
+                        marginLeft: nodeSize * (isFocused ? -1.225 : -0.925),
+                        marginTop: nodeSize * (isFocused ? -1.225 : -0.925),
+                      }}
+                      animate={{ rotate: 360, opacity: isFocused ? [0.42, 0.82, 0.42] : [0.18, 0.34, 0.18] }}
+                      transition={{ rotate: { duration: node.unit === "year" ? 30 : 22, repeat: Infinity, ease: "linear" }, opacity: { duration: 3.6, repeat: Infinity, ease: "easeInOut" } }}
+                    />
                   )}
 
                   <button
                     onClick={() => openNode(node)}
                     onMouseEnter={() => {
-                      if (!hasEvents) return;
                       setHoveredNode(node);
-                      setTooltipPos({ x: nodeX, y: nodeY + cardOffset });
+                      setTooltipPos({ x: nodeX, y: nodeY + labelOffset });
                     }}
                     onMouseLeave={() => setHoveredNode(null)}
                     aria-label={hasEvents ? `${node.label}: ${node.eventCount} 个事件` : `${node.label}: 无事件`}
-                    className={`relative z-10 flex items-center justify-center rounded-full border transition-all duration-300 ${
-                      hasEvents
-                        ? "cursor-pointer border-cosmos-gold/35 hover:scale-125 hover:border-cosmos-gold/80"
-                        : "cursor-default border-white/10 opacity-25"
+                    className={`relative z-10 flex items-center justify-center rounded-full border transition-transform duration-300 ${
+                      hasEvents ? "cursor-pointer hover:scale-110" : "cursor-default hover:scale-105"
+                    } ${
+                      node.unit === "year" ? "border-cosmos-gold/45" : node.unit === "month" ? "border-cosmos-blue/36" : "border-cosmos-purple/42"
                     }`}
                     style={{
-                      width: nodeSize * 2,
-                      height: nodeSize * 2,
+                      width: nodeSize,
+                      height: nodeSize,
                       background: hasEvents
-                        ? `radial-gradient(circle at 34% 28%, ${accent.replace("ALPHA", "0.96")} 0%, ${accent.replace("ALPHA", "0.42")} 48%, rgba(3,4,10,0.12) 100%)`
-                        : "rgba(255,255,255,0.06)",
+                        ? `radial-gradient(circle at 30% 24%, rgba(255,255,255,0.96) 0%, ${accent.replace("ALPHA", isMajor ? "0.9" : "0.68")} 18%, ${accent.replace("ALPHA", "0.32")} 58%, rgba(3,4,10,0.36) 100%)`
+                        : node.unit === "month"
+                          ? "radial-gradient(circle at 35% 25%, rgba(91,141,239,0.24), rgba(255,255,255,0.035) 70%)"
+                          : "rgba(255,255,255,0.055)",
                       boxShadow: hasEvents
-                        ? isHighlighted
-                          ? `0 0 ${nodeSize * 4}px ${accent.replace("ALPHA", "0.78")}, inset 0 0 ${nodeSize}px rgba(255,255,255,0.22)`
-                          : `0 0 ${nodeSize * 2.8}px ${accent.replace("ALPHA", isStrong ? "0.42" : "0.18")}`
-                        : "none",
+                        ? isFocused || isHighlighted
+                          ? `0 0 ${nodeSize * 1.75}px ${accent.replace("ALPHA", "0.72")}, inset 0 0 ${nodeSize * 0.45}px rgba(255,255,255,0.28)`
+                          : `0 0 ${nodeSize * (isStrong ? 0.92 : 0.58)}px ${accent.replace("ALPHA", isStrong ? "0.32" : "0.18")}, inset -8px -10px ${nodeSize * 0.35}px rgba(0,0,0,0.32)`
+                        : "inset -6px -8px 14px rgba(0,0,0,0.26)",
                     }}
                   >
-                    {hasEvents && <span className="h-1.5 w-1.5 rounded-full bg-white/80 shadow-[0_0_10px_rgba(255,255,255,0.65)]" />}
+                    {hasEvents && <span className="h-1.5 w-1.5 rounded-full bg-white/85 shadow-[0_0_10px_rgba(255,255,255,0.7)]" />}
                   </button>
 
                   <div
-                    className="absolute left-1/2 z-0 -translate-x-1/2 pointer-events-none"
-                    style={{ top: cardOffset, width: cardWidth }}
+                    className="pointer-events-none absolute left-1/2 z-0 -translate-x-1/2"
+                    style={{ top: labelOffset, width: labelWidth }}
                   >
-                    <div className={`rounded-2xl border px-4 py-3 backdrop-blur-xl transition-all duration-300 ${
-                      hasEvents
-                        ? "border-white/[0.09] bg-[#080a16]/72 shadow-[0_18px_55px_rgba(0,0,0,0.36)]"
-                        : "border-white/[0.035] bg-white/[0.025]"
-                    }`}>
-                      <div className="flex items-center justify-between gap-3">
-                        <span className={`font-mono ${drill.level === "day" ? "text-xl" : "text-2xl"} leading-none ${hasEvents ? "text-cosmos-text" : "text-cosmos-text-dim/45"}`}>
-                          {node.label}
-                        </span>
-                        {hasEvents && (
-                          <span className="rounded-full bg-cosmos-gold/10 px-2 py-0.5 font-mono text-[9px] text-cosmos-gold">
-                            {node.maxImpact}
+                    {showLabelCard ? (
+                      <div className={`rounded-2xl border px-3 py-2 text-center backdrop-blur-xl transition-all duration-300 ${
+                        isFocused
+                          ? "border-cosmos-gold/34 bg-[#0a0b17]/76 shadow-[0_18px_54px_rgba(212,168,83,0.18)]"
+                          : hasEvents
+                            ? "border-white/[0.07] bg-[#080a16]/54 shadow-[0_14px_38px_rgba(0,0,0,0.28)]"
+                            : "border-white/[0.035] bg-white/[0.018]"
+                      }`}>
+                        <div className="flex items-center justify-center gap-2">
+                          <span className={`font-mono leading-none ${node.unit === "year" ? "text-lg" : node.unit === "month" ? "text-sm" : "text-[11px]"} ${hasEvents || node.unit === "year" ? "text-cosmos-text" : "text-cosmos-text-dim/45"}`}>
+                            {node.label}
                           </span>
+                          {hasEvents && node.unit !== "day" && (
+                            <span className="rounded-full bg-cosmos-gold/10 px-1.5 py-0.5 font-mono text-[9px] text-cosmos-gold">
+                              {node.eventCount}
+                            </span>
+                          )}
+                        </div>
+                        {isFocused && node.subLabel && (
+                          <p className="mt-1 truncate text-[9px] text-cosmos-text-dim">{node.subLabel}</p>
+                        )}
+                        {hasEvents && (
+                          <div className="mt-2 h-0.5 overflow-hidden rounded-full bg-white/[0.08]">
+                            <div
+                              className="h-full rounded-full bg-gradient-to-r from-cosmos-blue via-cosmos-gold to-cosmos-accent"
+                              style={{ width: `${node.maxImpact}%` }}
+                            />
+                          </div>
                         )}
                       </div>
-                      {node.subLabel && (
-                        <p className={`mt-2 line-clamp-2 text-[10px] leading-4 ${hasEvents ? "text-cosmos-text-dim" : "text-cosmos-text-dim/35"}`}>
-                          {node.subLabel}
-                        </p>
-                      )}
-                      {hasEvents && (
-                        <div className="mt-3 h-1 overflow-hidden rounded-full bg-white/[0.08]">
-                          <motion.div
-                            initial={{ width: 0 }}
-                            animate={{ width: `${node.maxImpact}%` }}
-                            transition={{ duration: 0.75, delay: 0.12 + index * 0.015 }}
-                            className="h-full rounded-full bg-gradient-to-r from-cosmos-blue via-cosmos-gold to-cosmos-accent"
-                          />
-                        </div>
-                      )}
-                    </div>
+                    ) : (
+                      <span className="font-mono text-[11px] text-cosmos-text-dim/40">{node.label}</span>
+                    )}
                   </div>
-                </motion.div>
+                </div>
               );
             })}
           </motion.div>
@@ -673,13 +814,13 @@ export function Timeline({
       </div>
 
       <AnimatePresence>
-        {hoveredNode && hoveredNode.eventCount > 0 && (
+        {hoveredNode && (
           <motion.div
             initial={{ opacity: 0, y: 10, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.96 }}
             transition={{ duration: 0.18 }}
-            className="fixed z-50 w-[300px] max-w-[calc(100vw-32px)] rounded-3xl border border-white/[0.09] bg-[#070914]/88 p-4 shadow-[0_24px_90px_rgba(0,0,0,0.58)] backdrop-blur-2xl pointer-events-none"
+            className="pointer-events-none fixed z-50 w-[300px] max-w-[calc(100vw-32px)] rounded-3xl border border-white/[0.09] bg-[#070914]/88 p-4 shadow-[0_24px_90px_rgba(0,0,0,0.58)] backdrop-blur-2xl"
             style={{
               left: Math.max(16, Math.min(tooltipPos.x - 150, winW - 316)),
               top: Math.max(100, Math.min(tooltipPos.y, winH - 230)),
@@ -687,21 +828,23 @@ export function Timeline({
           >
             <div className="flex items-center justify-between gap-3">
               <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-cosmos-gold">
-                {hoveredNode.label} · {hoveredNode.eventCount} Events
+                {unitCopy[hoveredNode.unit]} · {hoveredNode.label}
               </p>
               <span className="rounded-full bg-white/[0.06] px-2 py-0.5 font-mono text-[10px] text-cosmos-text-dim">
-                {hoveredNode.maxImpact}
+                {hoveredNode.eventCount} Events
               </span>
             </div>
             <div className="mt-3 space-y-2">
-              {hoveredNode.events.slice(0, 3).map((event) => (
+              {hoveredNode.events.length > 0 ? hoveredNode.events.slice(0, 3).map((event) => (
                 <div key={event.id} className="rounded-2xl bg-white/[0.04] px-3 py-2">
                   <p className="truncate text-xs text-cosmos-text">{event.title}</p>
                   <p className="mt-1 font-mono text-[9px] text-cosmos-text-dim">
                     {format(parseISO(event.event_date), "yyyy.MM.dd")}
                   </p>
                 </div>
-              ))}
+              )) : (
+                <p className="rounded-2xl bg-white/[0.04] px-3 py-2 text-xs text-cosmos-text-dim">当前星球暂无事件</p>
+              )}
             </div>
             {hoveredNode.events.length > 3 && (
               <p className="mt-2 text-[10px] text-cosmos-text-dim">+{hoveredNode.events.length - 3} 更多事件</p>

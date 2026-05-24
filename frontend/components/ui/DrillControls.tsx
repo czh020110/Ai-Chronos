@@ -1,11 +1,12 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { DrillState } from "@/lib/types";
+import { DrillState, ZoomLevel } from "@/lib/types";
 
 interface DrillControlsProps {
   drill: DrillState;
   onDrillUp: () => void;
+  onLevelChange: (level: ZoomLevel) => void;
 }
 
 const monthNames = [
@@ -19,7 +20,7 @@ const levelLabels = {
   day: "日迹",
 };
 
-export function DrillControls({ drill, onDrillUp }: DrillControlsProps) {
+export function DrillControls({ drill, onDrillUp, onLevelChange }: DrillControlsProps) {
   const canGoUp = drill.level !== "year";
 
   return (
@@ -83,19 +84,32 @@ export function DrillControls({ drill, onDrillUp }: DrillControlsProps) {
           </div>
 
           <div className="flex shrink-0 items-center gap-1 rounded-full border border-white/[0.06] bg-white/[0.035] p-1">
-            {(["year", "month", "day"] as const).map((level) => (
-              <div
-                key={level}
-                title={levelLabels[level]}
-                className={`h-7 rounded-full px-2.5 py-1 font-mono text-[10px] transition-all duration-300 ${
-                  drill.level === level
-                    ? "bg-cosmos-gold/14 text-cosmos-gold shadow-[0_0_18px_rgba(212,168,83,0.12)]"
-                    : "text-cosmos-text-dim/55"
-                }`}
-              >
-                {levelLabels[level]}
-              </div>
-            ))}
+            {(["year", "month", "day"] as const).map((level) => {
+              const isActive = drill.level === level;
+              const isReachable =
+                level === "year" ||
+                (level === "month" && drill.year !== null) ||
+                (level === "day" && drill.month !== null);
+
+              return (
+                <button
+                  key={level}
+                  type="button"
+                  title={levelLabels[level]}
+                  disabled={!isReachable || isActive}
+                  onClick={() => onLevelChange(level)}
+                  className={`h-7 rounded-full px-2.5 py-1 font-mono text-[10px] transition-all duration-300 ${
+                    isActive
+                      ? "bg-cosmos-gold/14 text-cosmos-gold shadow-[0_0_18px_rgba(212,168,83,0.12)]"
+                      : isReachable
+                        ? "cursor-pointer text-cosmos-text-dim hover:bg-white/[0.055] hover:text-cosmos-gold"
+                        : "cursor-not-allowed text-cosmos-text-dim/32"
+                  }`}
+                >
+                  {levelLabels[level]}
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>

@@ -14,7 +14,20 @@ export type TagType = "论文" | "模型" | "新闻" | "工具" | "开源" | "�
 export type EventCategory = "paper" | "model" | "news" | "tool";
 export type EventStatus = "published" | "disputed" | "draft";
 export type ZoomLevel = "year" | "month" | "day";
+export type TimelineScale = "year" | "month" | "day";
+export type TimelineUnit = "year" | "month" | "day";
 export type ViewMode = "timeline" | "grid" | "list";
+
+export interface TimelineFocus {
+  key: string;
+  unit: TimelineUnit;
+  unitLabel: string;
+  label: string;
+  subLabel?: string;
+  eventCount: number;
+  maxImpact: number;
+  events: AIEvent[];
+}
 
 export interface DrillState {
   level: ZoomLevel;
