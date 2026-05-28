@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   AIEvent,
   ThemeMode,
+  TimelineBucket,
   TimelineFocus,
   TimelineScale,
   TimelineUnit,
@@ -18,7 +19,7 @@ interface TimelineProps {
   viewMode: ViewMode;
   onTimelineScaleChange: (scale: TimelineScale) => void;
   onFocusChange: (focus: TimelineFocus | null) => void;
-  onNodeClick: (event: AIEvent) => void;
+  onNodeClick: (bucket: TimelineBucket) => void;
   highlightedId: string | null;
   theme: ThemeMode;
 }
@@ -146,6 +147,19 @@ function eventImpact(events: AIEvent[]) {
   return events.length > 0
     ? Math.max(...events.map((event) => event.impact_score))
     : 0;
+}
+
+function bucketFromNode(node: RenderNode): TimelineBucket {
+  return {
+    key: node.key,
+    unit: node.unit,
+    unitLabel: unitCopy[node.unit],
+    label: node.label,
+    subLabel: node.subLabel,
+    eventCount: node.eventCount,
+    maxImpact: node.maxImpact,
+    events: node.events,
+  };
 }
 
 function focusFromNode(node: RenderNode): TimelineFocus {
@@ -394,13 +408,13 @@ function TimelineCanvas({
 }
 
 function GridView({
-  events,
+  buckets,
   onNodeClick,
   highlightedId,
   theme,
 }: {
-  events: AIEvent[];
-  onNodeClick: (event: AIEvent) => void;
+  buckets: RenderNode[];
+  onNodeClick: (bucket: TimelineBucket) => void;
   highlightedId: string | null;
   theme: ThemeMode;
 }) {
@@ -409,124 +423,143 @@ function GridView({
   return (
     <div className="absolute inset-x-0 bottom-0 top-24 z-20 overflow-y-auto px-5 pb-28 2xl:right-[335px]">
       <div className="mx-auto grid max-w-6xl grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {events.map((event, index) => (
-          <motion.button
-            key={event.id}
-            initial={{ opacity: 0, y: 26, scale: 0.98 }}
-            animate={{
-              opacity: 1,
-              y: 0,
-              scale: 1,
-              boxShadow:
-                highlightedId === event.id
-                  ? isDay
-                    ? "0 0 0 1px rgba(162,118,46,0.28), 0 14px 34px rgba(132,104,68,0.1)"
-                    : "0 0 0 1px rgba(240,192,96,0.5), 0 22px 70px rgba(212,168,83,0.16)"
-                  : isDay
-                    ? "0 10px 28px rgba(84,75,62,0.08)"
-                    : "0 22px 70px rgba(0,0,0,0.32)",
-            }}
-            transition={{
-              delay: index * 0.025,
-              duration: 0.42,
-              ease: "easeOut",
-            }}
-            onClick={() => onNodeClick(event)}
-            className="group chronos-panel min-h-[190px] p-5 text-left transition-transform duration-300 hover:-translate-y-1"
-          >
-            <div className="relative z-10 flex h-full flex-col">
-              <div className="flex items-center justify-between gap-3">
-                <span className="font-mono text-[10px] tracking-[0.2em] text-cosmos-text-dim">
-                  {format(parseISO(event.event_date), "yyyy.MM.dd")}
-                </span>
-                <span className="rounded-full border border-cosmos-gold/20 bg-cosmos-gold/10 px-2 py-0.5 font-mono text-[10px] text-cosmos-gold">
-                  {event.impact_score}
-                </span>
-              </div>
-              <h3 className="mt-5 font-display text-xl leading-tight text-cosmos-text transition-colors group-hover:text-cosmos-gold">
-                {event.title}
-              </h3>
-              <div className="mt-auto pt-5">
-                <div className="mb-3 h-1 overflow-hidden rounded-full bg-white/[0.07]">
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: `${event.impact_score}%` }}
-                    transition={{ duration: 0.8, delay: index * 0.02 }}
-                    className="h-full rounded-full bg-gradient-to-r from-cosmos-blue via-cosmos-gold to-cosmos-accent"
-                  />
+        {buckets.map((bucket, index) => {
+          const topEvent = bucket.events[0];
+          const isHighlighted = topEvent ? highlightedId === topEvent.id : false;
+
+          return (
+            <motion.button
+              key={bucket.key}
+              initial={{ opacity: 0, y: 26, scale: 0.98 }}
+              animate={{
+                opacity: 1,
+                y: 0,
+                scale: 1,
+                boxShadow:
+                  isHighlighted
+                    ? isDay
+                      ? "0 0 0 1px rgba(162,118,46,0.28), 0 14px 34px rgba(132,104,68,0.1)"
+                      : "0 0 0 1px rgba(240,192,96,0.5), 0 22px 70px rgba(212,168,83,0.16)"
+                    : isDay
+                      ? "0 10px 28px rgba(84,75,62,0.08)"
+                      : "0 22px 70px rgba(0,0,0,0.32)",
+              }}
+              transition={{
+                delay: index * 0.025,
+                duration: 0.42,
+                ease: "easeOut",
+              }}
+              onClick={() => onNodeClick(bucketFromNode(bucket))}
+              className="group chronos-panel min-h-[190px] p-5 text-left transition-transform duration-300 hover:-translate-y-1"
+            >
+              <div className="relative z-10 flex h-full flex-col">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="font-mono text-[10px] tracking-[0.2em] text-cosmos-text-dim">
+                    {unitCopy[bucket.unit]}
+                  </span>
+                  <span className="rounded-full border border-cosmos-gold/20 bg-cosmos-gold/10 px-2 py-0.5 font-mono text-[10px] text-cosmos-gold">
+                    {bucket.maxImpact}
+                  </span>
                 </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {event.tags.slice(0, 3).map((tag) => (
-                    <span
-                      key={tag}
-                      className="rounded-full border border-white/10 bg-cosmos-surface/55 px-2 py-0.5 text-[10px] text-cosmos-text-dim"
-                    >
-                      {tag}
+                <h3 className="mt-5 font-display text-xl leading-tight text-cosmos-text transition-colors group-hover:text-cosmos-gold">
+                  {bucket.label}
+                </h3>
+                <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-cosmos-text-dim">
+                  {bucket.subLabel}
+                </p>
+                <div className="mt-auto pt-5">
+                  <div className="mb-3 h-1 overflow-hidden rounded-full bg-white/[0.07]">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${bucket.maxImpact}%` }}
+                      transition={{ duration: 0.8, delay: index * 0.02 }}
+                      className="h-full rounded-full bg-gradient-to-r from-cosmos-blue via-cosmos-gold to-cosmos-accent"
+                    />
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    <span className="rounded-full border border-white/10 bg-cosmos-surface/55 px-2 py-0.5 text-[10px] text-cosmos-text-dim">
+                      {bucket.eventCount} 个事件
                     </span>
-                  ))}
+                    {topEvent?.tags.slice(0, 2).map((tag) => (
+                      <span
+                        key={tag}
+                        className="rounded-full border border-white/10 bg-cosmos-surface/55 px-2 py-0.5 text-[10px] text-cosmos-text-dim"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
-          </motion.button>
-        ))}
+            </motion.button>
+          );
+        })}
       </div>
     </div>
   );
 }
 
 function ListView({
-  events,
+  buckets,
   onNodeClick,
   highlightedId,
 }: {
-  events: AIEvent[];
-  onNodeClick: (event: AIEvent) => void;
+  buckets: RenderNode[];
+  onNodeClick: (bucket: TimelineBucket) => void;
   highlightedId: string | null;
 }) {
   return (
     <div className="absolute inset-x-0 bottom-0 top-24 z-20 overflow-y-auto px-5 pb-28 2xl:right-[355px]">
       <div className="mx-auto max-w-4xl space-y-3">
-        {events.map((event, index) => (
-          <motion.button
-            key={event.id}
-            initial={{ opacity: 0, x: -24 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: index * 0.018, duration: 0.36 }}
-            onClick={() => onNodeClick(event)}
-            className={`group grid w-full grid-cols-[88px_1fr_auto] items-center gap-5 rounded-2xl border px-5 py-4 text-left backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 hover:border-cosmos-gold/25 ${
-              highlightedId === event.id
-                ? "border-cosmos-gold/45 bg-cosmos-gold/10 shadow-[0_0_34px_rgba(212,168,83,0.18)]"
-                : "border-cosmos-border/30 bg-white/[0.035]"
-            }`}
-          >
-            <div className="font-mono text-right">
-              <span className="block text-sm text-cosmos-gold">
-                {format(parseISO(event.event_date), "yyyy")}
-              </span>
-              <span className="text-[10px] tracking-[0.16em] text-cosmos-text-dim">
-                {format(parseISO(event.event_date), "MM.dd")}
-              </span>
-            </div>
-            <div className="min-w-0">
-              <h3 className="truncate text-sm text-cosmos-text transition-colors group-hover:text-cosmos-gold">
-                {event.title}
-              </h3>
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                {event.tags.slice(0, 3).map((tag) => (
-                  <span
-                    key={tag}
-                    className="rounded-full bg-white/[0.05] px-2 py-0.5 text-[9px] text-cosmos-text-dim"
-                  >
-                    {tag}
-                  </span>
-                ))}
+        {buckets.map((bucket, index) => {
+          const topEvent = bucket.events[0];
+          const isHighlighted = topEvent ? highlightedId === topEvent.id : false;
+
+          return (
+            <motion.button
+              key={bucket.key}
+              initial={{ opacity: 0, x: -24 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: index * 0.018, duration: 0.36 }}
+              onClick={() => onNodeClick(bucketFromNode(bucket))}
+              className={`group grid w-full grid-cols-[88px_1fr_auto] items-center gap-5 rounded-2xl border px-5 py-4 text-left backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 hover:border-cosmos-gold/25 ${
+                isHighlighted
+                  ? "border-cosmos-gold/45 bg-cosmos-gold/10 shadow-[0_0_34px_rgba(212,168,83,0.18)]"
+                  : "border-cosmos-border/30 bg-white/[0.035]"
+              }`}
+            >
+              <div className="font-mono text-right">
+                <span className="block text-sm text-cosmos-gold">
+                  {bucket.label}
+                </span>
+                <span className="text-[10px] tracking-[0.16em] text-cosmos-text-dim">
+                  {unitCopy[bucket.unit]}
+                </span>
               </div>
-            </div>
-            <span className="rounded-full border border-white/10 bg-cosmos-surface/55 px-2.5 py-1 font-mono text-[10px] text-cosmos-text-dim">
-              {event.impact_score}
-            </span>
-          </motion.button>
-        ))}
+              <div className="min-w-0">
+                <h3 className="truncate text-sm text-cosmos-text transition-colors group-hover:text-cosmos-gold">
+                  {bucket.subLabel ?? bucket.label}
+                </h3>
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  <span className="rounded-full bg-white/[0.05] px-2 py-0.5 text-[9px] text-cosmos-text-dim">
+                    {bucket.eventCount} 个事件
+                  </span>
+                  {topEvent?.tags.slice(0, 2).map((tag) => (
+                    <span
+                      key={tag}
+                      className="rounded-full bg-white/[0.05] px-2 py-0.5 text-[9px] text-cosmos-text-dim"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <span className="rounded-full border border-white/10 bg-cosmos-surface/55 px-2.5 py-1 font-mono text-[10px] text-cosmos-text-dim">
+                {bucket.maxImpact}
+              </span>
+            </motion.button>
+          );
+        })}
       </div>
     </div>
   );
@@ -940,7 +973,7 @@ export function Timeline({
     (node: RenderNode) => {
       selectNode(node);
       if (node.eventCount === 0) return;
-      onNodeClick(node.events[0]);
+      onNodeClick(focusFromNode(node));
     },
     [onNodeClick, selectNode],
   );
@@ -973,7 +1006,7 @@ export function Timeline({
   if (viewMode === "grid") {
     return (
       <GridView
-        events={events}
+        buckets={activeNodes}
         onNodeClick={onNodeClick}
         highlightedId={highlightedId}
         theme={theme}
@@ -984,7 +1017,7 @@ export function Timeline({
   if (viewMode === "list") {
     return (
       <ListView
-        events={events}
+        buckets={activeNodes}
         onNodeClick={onNodeClick}
         highlightedId={highlightedId}
       />

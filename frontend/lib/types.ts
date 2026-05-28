@@ -19,7 +19,7 @@ export type TimelineUnit = "year" | "month" | "day";
 export type ViewMode = "timeline" | "grid" | "list";
 export type ThemeMode = "night" | "day";
 
-export interface TimelineFocus {
+export interface TimelineBucket {
   key: string;
   unit: TimelineUnit;
   unitLabel: string;
@@ -29,6 +29,8 @@ export interface TimelineFocus {
   maxImpact: number;
   events: AIEvent[];
 }
+
+export interface TimelineFocus extends TimelineBucket {}
 
 export interface DrillState {
   level: ZoomLevel;

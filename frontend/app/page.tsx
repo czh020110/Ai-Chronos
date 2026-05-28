@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import { sampleEvents } from "@/lib/data";
-import { AIEvent, ThemeMode, TimelineFocus, TimelineScale, ViewMode } from "@/lib/types";
+import { AIEvent, ThemeMode, TimelineBucket, TimelineFocus, TimelineScale, ViewMode } from "@/lib/types";
 import { StarField } from "@/components/background/StarField";
 import { NavBar } from "@/components/navigation/NavBar";
 import { Timeline } from "@/components/timeline/Timeline";
@@ -17,9 +17,13 @@ const scaleCopy: Record<TimelineScale, string> = {
   day: "Y + M + D",
 };
 
+function formatSearchDate(value: string) {
+  return value.replaceAll("-", ".");
+}
+
 export default function Home() {
   const [events] = useState<AIEvent[]>(sampleEvents);
-  const [selectedEvent, setSelectedEvent] = useState<AIEvent | null>(null);
+  const [selectedBucket, setSelectedBucket] = useState<TimelineBucket | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [timelineScale, setTimelineScale] = useState<TimelineScale>("month");
@@ -54,8 +58,9 @@ export default function Home() {
         ? "年份主星 + 月份轨道"
         : "年 / 月 / 日全息轨迹";
 
-  const handleNodeClick = useCallback((event: AIEvent) => {
-    setSelectedEvent(event);
+  const handleNodeClick = useCallback((bucket: TimelineBucket) => {
+    if (bucket.eventCount === 0) return;
+    setSelectedBucket(bucket);
     setDrawerOpen(true);
   }, []);
 
@@ -68,7 +73,16 @@ export default function Home() {
   }, []);
 
   const handleSearchSelect = useCallback((event: AIEvent) => {
-    setSelectedEvent(event);
+    setSelectedBucket({
+      key: `event-${event.id}`,
+      unit: "day",
+      unitLabel: "Selected Event",
+      label: formatSearchDate(event.event_date),
+      subLabel: event.title,
+      eventCount: 1,
+      maxImpact: event.impact_score,
+      events: [event],
+    });
     setDrawerOpen(true);
     setHighlightedId(event.id);
     setSearchOpen(false);
@@ -166,7 +180,7 @@ export default function Home() {
       />
 
       <DetailDrawer
-        event={selectedEvent}
+        bucket={selectedBucket}
         isOpen={drawerOpen}
         onClose={handleCloseDrawer}
       />
