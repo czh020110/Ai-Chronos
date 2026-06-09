@@ -1,0 +1,152 @@
+[
+  {
+    "id": "gpt4-launch",
+    "title": "GPT-4 发布",
+    "event_date": "2023-03-14",
+    "content_md": "## GPT-4 发布\n\nOpenAI 于 2023 年 3 月 14 日正式发布 GPT-4，这是一个大型多模态模型，能够接受图像和文本输入，输出文本回答。\n\n### 关键特性\n- **多模态输入**：支持图像理解\n- **更长上下文**：支持 32K token 上下文窗口\n- **更安全**：相比 GPT-3.5，幻觉率降低 40%\n- **考试表现**：在模拟律师资格考试中排名前 10%\n\n### 影响\nGPT-4 的发布标志着大语言模型从纯文本走向多模态的重要里程碑，推动了整个 AI 行业的升级换代。",
+    "tags": ["LLM", "OpenAI", "多模态", "里程碑"],
+    "source_urls": ["https://openai.com/research/gpt-4"],
+    "impact_score": 10,
+    "category": "模型发布"
+  },
+  {
+    "id": "chatgpt-launch",
+    "title": "ChatGPT 上线",
+    "event_date": "2022-11-30",
+    "content_md": "## ChatGPT 上线\n\nOpenAI 于 2022 年 11 月 30 日推出 ChatGPT，基于 GPT-3.5 微调的对话模型，5 天内用户突破 100 万。\n\n### 关键数据\n- **5 天**：达到 100 万用户\n- **2 个月**：达到 1 亿活跃用户\n- **免费开放**：初期完全免费使用\n\n### 影响\nChatGPT 的爆火让大语言模型从学术圈走向大众，开启了 AI 应用的寒武纪大爆发。",
+    "tags": ["LLM", "OpenAI", "对话AI", "里程碑"],
+    "source_urls": ["https://openai.com/blog/chatgpt"],
+    "impact_score": 10,
+    "category": "产品发布"
+  },
+  {
+    "id": "midjourney-v5",
+    "title": "Midjourney V5 发布",
+    "event_date": "2023-03-15",
+    "content_md": "## Midjourney V5 发布\n\nMidjourney 于 2023 年 3 月 15 日发布 V5 版本，图像生成质量大幅提升，接近摄影级真实感。\n\n### 关键改进\n- **照片级真实感**：人物细节、光影效果显著提升\n- **更宽风格范围**：从写实到艺术风格均表现优异\n- **手部生成**：大幅改善了手部生成的常见问题\n\n### 影响\nV5 标志着 AI 图像生成进入实用阶段，对设计、广告、影视等行业产生深远影响。",
+    "tags": ["图像生成", "Midjourney", "AIGC"],
+    "source_urls": ["https://www.midjourney.com"],
+    "impact_score": 8,
+    "category": "模型发布"
+  },
+  {
+    "id": "llama-release",
+    "title": "Meta 发布 LLaMA",
+    "event_date": "2023-02-24",
+    "content_md": "## Meta 发布 LLaMA\n\nMeta 于 2023 年 2 月 24 日发布 LLaMA（Large Language Model Meta AI），一系列从 7B 到 65B 参数量的开源语言模型。\n\n### 关键特性\n- **开源权重**：研究用途可申请获取模型权重\n- **多规模**：7B、13B、33B、65B 四种规模\n- **高效训练**：使用公开数据集训练，训练效率优化\n\n### 影响\nLLaMA 的发布（特别是后续权重泄露事件）直接引爆了开源大模型社区，催生了 Alpaca、Vicuna、WizardLM 等一系列优秀模型。",
+    "tags": ["开源模型", "Meta", "LLM", "里程碑"],
+    "source_urls": ["https://ai.meta.com/blog/large-language-model-llama-meta-ai/"],
+    "impact_score": 9,
+    "category": "模型发布"
+  },
+  {
+    "id": "stable-diffusion-release",
+    "title": "Stable Diffusion 开源",
+    "event_date": "2022-08-22",
+    "content_md": "## Stable Diffusion 开源发布\n\nStability AI 于 2022 年 8 月 22 日将 Stable Diffusion 模型权重开源，成为 AI 图像生成领域的里程碑事件。\n\n### 关键特性\n- **完全开源**：模型权重、代码全部公开\n- **本地运行**：可在消费级 GPU 上运行\n- **社区生态**：催生了 ControlNet、LoRA 等丰富的生态系统\n\n### 影响\nStable Diffusion 的开源让 AI 图像生成从闭锁走向开放，构建了目前最大的 AI 图像生成社区。",
+    "tags": ["图像生成", "开源", "StabilityAI", "里程碑"],
+    "source_urls": ["https://stability.ai/blog/stable-diffusion-public-release"],
+    "impact_score": 9,
+    "category": "模型发布"
+  },
+  {
+    "id": "copilot-x-announce",
+    "title": "GitHub Copilot X 发布",
+    "event_date": "2023-03-22",
+    "content_md": "## GitHub Copilot X 发布\n\nGitHub 于 2023 年 3 月 22 日宣布 Copilot X，集成 GPT-4，将 AI 编程助手带入新阶段。\n\n### 关键特性\n- **GPT-4 驱动**：基于最新 GPT-4 模型\n- **对话式编程**：支持在 IDE 中进行自然语言对话\n- **文档生成**：自动生成代码文档和测试\n- **PR 摘要**：自动生成 Pull Request 描述\n\n### 影响\nCopilot X 标志着 AI 编程助手从代码补全进化到全流程辅助，极大提升开发者生产力。",
+    "tags": ["AI编程", "GitHub", "开发者工具"],
+    "source_urls": ["https://github.blog/2023-03-22-github-copilot-x-the-ai-powered-developer-experience/"],
+    "impact_score": 8,
+    "category": "产品发布"
+  },
+  {
+    "id": "gemini-announce",
+    "title": "Google 发布 Gemini",
+    "event_date": "2023-12-06",
+    "content_md": "## Google 发布 Gemini\n\nGoogle 于 2023 年 12 月 6 日发布 Gemini 系列模型，这是 Google 最强大的多模态 AI 模型。\n\n### 三个版本\n- **Ultra**：最大规模，处理高度复杂任务\n- **Pro**：最佳性价比，广泛适用\n- **Nano**：端侧部署，高效轻量\n\n### 影响\nGemini 是 Google 对 GPT-4 的最强回应，标志着大模型竞赛进入新阶段。",
+    "tags": ["LLM", "Google", "多模态", "里程碑"],
+    "source_urls": ["https://blog.google/technology/ai/google-gemini-ai/"],
+    "impact_score": 9,
+    "category": "模型发布"
+  },
+  {
+    "id": "claude2-release",
+    "title": "Claude 2 发布",
+    "event_date": "2023-07-11",
+    "content_md": "## Claude 2 发布\n\nAnthropic 于 2023 年 7 月 11 日发布 Claude 2，支持 100K token 上下文窗口。\n\n### 关键特性\n- **100K 上下文**：支持超长文档分析\n- **API 开放**：向全球开发者提供 API\n- **安全性**：更强的安全对齐训练\n\n### 影响\nClaude 2 的超长上下文能力为文档分析、代码理解等场景开辟了新的可能性。",
+    "tags": ["LLM", "Anthropic", "长上下文"],
+    "source_urls": ["https://www.anthropic.com/index/claude-2"],
+    "impact_score": 8,
+    "category": "模型发布"
+  },
+  {
+    "id": "sora-announce",
+    "title": "OpenAI 发布 Sora",
+    "event_date": "2024-02-15",
+    "content_md": "## OpenAI 发布 Sora\n\nOpenAI 于 2024 年 2 月 15 日发布 Sora 文本生成视频模型，能够生成长达 60 秒的高质量视频。\n\n### 关键特性\n- **长视频生成**：最长 60 秒连贯视频\n- **物理一致性**：较好地模拟物理世界\n- **多角色场景**：支持复杂多角色交互\n\n### 影响\nSora 将 AI 生成从图像推向视频时代，对影视、广告、教育等行业产生颠覆性影响。",
+    "tags": ["视频生成", "OpenAI", "多模态", "里程碑"],
+    "source_urls": ["https://openai.com/sora"],
+    "impact_score": 9,
+    "category": "模型发布"
+  },
+  {
+    "id": "ai-act-passed",
+    "title": "EU AI Act 通过",
+    "event_date": "2024-03-13",
+    "content_md": "## 欧盟 AI 法案通过\n\n欧洲议会于 2024 年 3 月 13 日正式通过《人工智能法案》，这是全球首部全面的 AI 监管法律。\n\n### 核心要点\n- **风险分级**：按风险等级分类管理 AI 系统\n- **透明度要求**：强制标注 AI 生成内容\n- **禁令清单**：禁止社会评分等高风险应用\n- **通用模型义务**：对基础模型提出额外要求\n\n### 影响\nEU AI Act 为全球 AI 监管树立了标杆，将深刻影响 AI 企业的合规策略和产品开发。",
+    "tags": ["政策法规", "欧盟", "AI治理", "里程碑"],
+    "source_urls": ["https://www.europarl.europa.eu/topics/en/article/20240313"],
+    "impact_score": 8,
+    "category": "政策法规"
+  },
+  {
+    "id": "alphaevolve-nature",
+    "title": "DeepMind AlphaFold 2 发布",
+    "event_date": "2020-11-30",
+    "content_md": "## AlphaFold 2 解决蛋白质折叠问题\n\nDeepMind 于 2020 年 11 月 30 日宣布 AlphaFold 2 在 CASP14 竞赛中达到实验精度水平，解决了困扰生物学 50 年的蛋白质折叠问题。\n\n### 关键成就\n- **GDT 分数 92.4**：远超其他参赛方法\n- **原子级精度**：预测精度可媲美实验方法\n- **生物学革命**：为药物发现和疾病研究开辟新途径\n\n### 影响\nAlphaFold 2 被认为是 AI 在科学领域最重大的突破之一，2022 年开源了 2 亿个蛋白质结构预测。",
+    "tags": ["科学AI", "DeepMind", "蛋白质折叠", "里程碑"],
+    "source_urls": ["https://deepmind.com/blog/article/alphafold-a-solution-to-a-50-year-old-grand-challenge-in-biology"],
+    "impact_score": 10,
+    "category": "科学突破"
+  },
+  {
+    "id": "gpt3-paper",
+    "title": "GPT-3 论文发布",
+    "event_date": "2020-05-28",
+    "content_md": "## GPT-3 论文发布\n\nOpenAI 于 2020 年 5 月发布 GPT-3 论文《Language Models are Few-Shot Learners》，1750 亿参数的语言模型展示了强大的少样本学习能力。\n\n### 关键发现\n- **1750 亿参数**：当时最大的语言模型\n- **少样本学习**：无需微调即可完成多种任务\n- **涌现能力**：规模增大带来质的飞跃\n\n### 影响\nGPT-3 证明了「缩放定律」的有效性，确立了大规模预训练 + 少样本推理的技术路线。",
+    "tags": ["LLM", "OpenAI", "缩放定律", "里程碑"],
+    "source_urls": ["https://arxiv.org/abs/2005.14165"],
+    "impact_score": 10,
+    "category": "论文发布"
+  },
+  {
+    "id": "transformer-paper",
+    "title": "Transformer 架构论文发布",
+    "event_date": "2017-06-12",
+    "content_md": "## Attention Is All You Need\n\nGoogle 团队于 2017 年 6 月发布 Transformer 架构论文，提出自注意力机制，彻底改变了自然语言处理领域。\n\n### 核心创新\n- **自注意力机制**：摒弃 RNN/CNN 的序列依赖\n- **多头注意力**：并行捕获多种语义关系\n- **位置编码**：保留序列顺序信息\n\n### 影响\nTransformer 成为现代 AI 的基础架构，GPT、BERT、ViT 等里程碑模型均基于此架构。这是当代 AI 革命的起点。",
+    "tags": ["Transformer", "Google", "架构", "里程碑"],
+    "source_urls": ["https://arxiv.org/abs/1706.03762"],
+    "impact_score": 10,
+    "category": "论文发布"
+  },
+  {
+    "id": "dalle2-release",
+    "title": "DALL·E 2 发布",
+    "event_date": "2022-04-06",
+    "content_md": "## DALL·E 2 发布\n\nOpenAI 于 2022 年 4 月发布 DALL·E 2，能够根据文本描述生成高分辨率、高保真度的图像。\n\n### 关键特性\n- **高分辨率**：支持 1024×1024 图像生成\n- **CLIP 引导**：使用 CLIP 模型提升文本-图像对齐\n- **编辑能力**：支持图像局部编辑和变体生成\n\n### 影响\nDALL·E 2 证明了文本到图像生成的可行性，催生了 AI 图像生成的浪潮。",
+    "tags": ["图像生成", "OpenAI", "AIGC"],
+    "source_urls": ["https://openai.com/dall-e-2"],
+    "impact_score": 8,
+    "category": "模型发布"
+  },
+  {
+    "id": "bert-release",
+    "title": "Google 发布 BERT",
+    "event_date": "2018-10-11",
+    "content_md": "## BERT 发布\n\nGoogle 于 2018 年 10 月发布 BERT（Bidirectional Encoder Representations from Transformers），开创了预训练 + 微调的 NLP 新范式。\n\n### 核心创新\n- **双向编码**：同时考虑上下文信息\n- **MLM 预训练**：掩码语言模型预训练任务\n- **NSP 任务**：下一句预测辅助预训练\n\n### 影响\nBERT 在 11 项 NLP 基准上刷新记录，开启了预训练模型的黄金时代，被广泛应用于搜索、问答等场景。",
+    "tags": ["LLM", "Google", "预训练", "里程碑"],
+    "source_urls": ["https://arxiv.org/abs/1810.04805"],
+    "impact_score": 9,
+    "category": "模型发布"
+  }
+]

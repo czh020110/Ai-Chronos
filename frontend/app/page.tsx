@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
-import { sampleEvents } from "@/lib/data";
+import { fetchPublishedEvents } from "@/lib/api";
 import { AIEvent, ThemeMode, TimelineBucket, TimelineFocus, TimelineScale, ViewMode } from "@/lib/types";
 import { StarField } from "@/components/background/StarField";
 import { NavBar } from "@/components/navigation/NavBar";
@@ -22,7 +22,9 @@ function formatSearchDate(value: string) {
 }
 
 export default function Home() {
-  const [events] = useState<AIEvent[]>(sampleEvents);
+  const [events, setEvents] = useState<AIEvent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedBucket, setSelectedBucket] = useState<TimelineBucket | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -33,7 +35,17 @@ export default function Home() {
   const [theme, setTheme] = useState<ThemeMode>("night");
   const [themeReady, setThemeReady] = useState(false);
 
+  useEffect(() => {
+    fetchPublishedEvents()
+      .then((data) => setEvents(data as AIEvent[]))
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, []);
+
   const stats = useMemo(() => {
+    if (events.length === 0) {
+      return { span: "—", eventCount: 0, highImpact: 0, categoryCount: 0, topEvent: null as AIEvent | null };
+    }
     const years = events.map((event) => new Date(event.event_date).getFullYear());
     const minYear = Math.min(...years);
     const maxYear = Math.max(...years);
@@ -154,12 +166,12 @@ export default function Home() {
               {timelineFocus ? `${timelineFocus.eventCount} Linked Events` : "Focus Signal"}
             </span>
             <p className="mt-2 text-sm leading-6 text-cosmos-text/86">
-              {timelineFocus?.events[0]?.title ?? stats.topEvent.title}
+              {timelineFocus?.events[0]?.title ?? stats.topEvent?.title ?? ""}
             </p>
             <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-cosmos-surface/60">
               <motion.div
                 initial={{ width: 0 }}
-                animate={{ width: `${timelineFocus?.maxImpact ?? stats.topEvent.impact_score}%` }}
+                animate={{ width: `${timelineFocus?.maxImpact ?? stats.topEvent?.impact_score ?? 0}%` }}
                 transition={{ duration: 0.9, delay: 0.2 }}
                 className="h-full rounded-full bg-gradient-to-r from-cosmos-gold-dim via-cosmos-gold to-cosmos-accent"
               />

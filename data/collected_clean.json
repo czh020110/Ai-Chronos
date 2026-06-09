@@ -1,0 +1,719 @@
+[
+  {
+    "id": "transformer-paper",
+    "title": "Transformer 架构论文发布",
+    "event_date": "2017-06-12",
+    "content_md": "## Attention Is All You Need\n\nGoogle 团队于 2017 年 6 月发布 Transformer 架构论文，提出自注意力机制，彻底改变了自然语言处理领域。\n\n### 核心创新\n- **自注意力机制**：摒弃 RNN/CNN 的序列依赖\n- **多头注意力**：并行捕获多种语义关系\n- **位置编码**：保留序列顺序信息\n\n### 影响\nTransformer 成为现代 AI 的基础架构，GPT、BERT、ViT 等里程碑模型均基于此架构。这是当代 AI 革命的起点。",
+    "tags": [
+      "Transformer",
+      "Google",
+      "架构",
+      "里程碑"
+    ],
+    "source_urls": [
+      "https://arxiv.org/abs/1706.03762"
+    ],
+    "impact_score": 10,
+    "category": "论文发布"
+  },
+  {
+    "id": "bert-release",
+    "title": "Google 发布 BERT",
+    "event_date": "2018-10-11",
+    "content_md": "## BERT 发布\n\nGoogle 于 2018 年 10 月发布 BERT（Bidirectional Encoder Representations from Transformers），开创了预训练 + 微调的 NLP 新范式。\n\n### 核心创新\n- **双向编码**：同时考虑上下文信息\n- **MLM 预训练**：掩码语言模型预训练任务\n- **NSP 任务**：下一句预测辅助预训练\n\n### 影响\nBERT 在 11 项 NLP 基准上刷新记录，开启了预训练模型的黄金时代，被广泛应用于搜索、问答等场景。",
+    "tags": [
+      "LLM",
+      "Google",
+      "预训练",
+      "里程碑"
+    ],
+    "source_urls": [
+      "https://arxiv.org/abs/1810.04805"
+    ],
+    "impact_score": 9,
+    "category": "模型发布"
+  },
+  {
+    "id": "gpt3-paper",
+    "title": "GPT-3 论文发布",
+    "event_date": "2020-05-28",
+    "content_md": "## GPT-3 论文发布\n\nOpenAI 于 2020 年 5 月发布 GPT-3 论文《Language Models are Few-Shot Learners》，1750 亿参数的语言模型展示了强大的少样本学习能力。\n\n### 关键发现\n- **1750 亿参数**：当时最大的语言模型\n- **少样本学习**：无需微调即可完成多种任务\n- **涌现能力**：规模增大带来质的飞跃\n\n### 影响\nGPT-3 证明了「缩放定律」的有效性，确立了大规模预训练 + 少样本推理的技术路线。",
+    "tags": [
+      "LLM",
+      "OpenAI",
+      "缩放定律",
+      "里程碑"
+    ],
+    "source_urls": [
+      "https://arxiv.org/abs/2005.14165"
+    ],
+    "impact_score": 10,
+    "category": "论文发布"
+  },
+  {
+    "title": "Hugging Face 发布 Transformers 库",
+    "event_date": "2020-07-19",
+    "content_md": "## Hugging Face 发布 Transformers 库\n\nHugging Face 的 Transformers 库成为 NLP 和 LLM 开发的标准工具，统一了 BERT、GPT、T5 等模型的接口。该库极大降低了使用和微调预训练模型的门槛，推动了 AI 民主化。",
+    "tags": [
+      "开源",
+      "里程碑",
+      "LLM"
+    ],
+    "source_urls": [
+      "https://huggingface.co/transformers/"
+    ],
+    "impact_score": 9,
+    "category": "开源发布",
+    "id": "event-hugging-face-transformers-2020-07-19"
+  },
+  {
+    "title": "DeepMind AlphaFold 2 解决蛋白质折叠问题",
+    "event_date": "2020-11-30",
+    "content_md": "## DeepMind AlphaFold 2 解决蛋白质折叠问题\n\nDeepMind 的 AlphaFold 2 在 CASP14 竞赛中达到原子级精度，被认为解决了蛋白质结构预测这一 50 年难题。该成果对生物学和药物研发产生深远影响。",
+    "tags": [
+      "蛋白质折叠",
+      "DeepMind",
+      "里程碑",
+      "科学AI"
+    ],
+    "source_urls": [
+      "https://deepmind.com/blog/article/alphafold-a-solution-to-a-50-year-old-grand-challenge-in-biology"
+    ],
+    "impact_score": 10,
+    "category": "科学突破",
+    "id": "event-deepmind-alphafold-2-2020-11-30"
+  },
+  {
+    "title": "OpenAI 发布 DALL-E 图像生成模型",
+    "event_date": "2021-01-05",
+    "content_md": "## OpenAI 发布 DALL-E 图像生成模型\n\nOpenAI 发布 DALL-E，一个能根据文本描述生成图像的神经网络，基于 120 亿参数的 GPT-3 变体，展示了语言-视觉跨模态生成的惊人能力。",
+    "tags": [
+      "OpenAI",
+      "图像生成",
+      "多模态",
+      "里程碑"
+    ],
+    "source_urls": [
+      "https://openai.com/blog/dall-e/"
+    ],
+    "impact_score": 9,
+    "category": "模型发布",
+    "id": "event-openai-dall-e-2021-01-05"
+  },
+  {
+    "id": "dalle2-release",
+    "title": "DALL·E 2 发布",
+    "event_date": "2022-04-06",
+    "content_md": "## DALL·E 2 发布\n\nOpenAI 于 2022 年 4 月发布 DALL·E 2，能够根据文本描述生成高分辨率、高保真度的图像。\n\n### 关键特性\n- **高分辨率**：支持 1024×1024 图像生成\n- **CLIP 引导**：使用 CLIP 模型提升文本-图像对齐\n- **编辑能力**：支持图像局部编辑和变体生成\n\n### 影响\nDALL·E 2 证明了文本到图像生成的可行性，催生了 AI 图像生成的浪潮。",
+    "tags": [
+      "图像生成",
+      "OpenAI",
+      "AIGC"
+    ],
+    "source_urls": [
+      "https://openai.com/dall-e-2"
+    ],
+    "impact_score": 8,
+    "category": "模型发布"
+  },
+  {
+    "title": "GitHub Copilot 正式发布",
+    "event_date": "2022-06-21",
+    "content_md": "## GitHub Copilot 正式发布\n\nGitHub 和 OpenAI 联合推出 Copilot，基于 Codex 模型的 AI 编程助手，集成到 VS Code 等 IDE 中。Copilot 可根据注释和上下文自动补全代码，标志着 AI 辅助编程进入主流开发流程。",
+    "tags": [
+      "Microsoft",
+      "AI编程",
+      "产品发布"
+    ],
+    "source_urls": [
+      "https://github.blog/2022-06-21-github-copilot-is-generally-available-to-all-developers/"
+    ],
+    "impact_score": 9,
+    "category": "产品发布",
+    "id": "event-github-copilot-2022-06-21"
+  },
+  {
+    "title": "Stability AI 开源 Stable Diffusion",
+    "event_date": "2022-08-22",
+    "content_md": "## Stability AI 开源 Stable Diffusion\n\nStability AI 将 Stable Diffusion 模型开源，任何人都可以在消费级 GPU 上运行图像生成。这一举措引爆了 AI 图像生成社区，催生了大量衍生模型和应用。",
+    "tags": [
+      "开源",
+      "图像生成",
+      "里程碑"
+    ],
+    "source_urls": [
+      "https://stability.ai/blog/stable-diffusion-public-release"
+    ],
+    "impact_score": 9,
+    "category": "开源发布",
+    "id": "event-stability-ai-stable-diffusion-2022-08-22"
+  },
+  {
+    "id": "stable-diffusion-release",
+    "title": "Stable Diffusion 开源",
+    "event_date": "2022-08-22",
+    "content_md": "## Stable Diffusion 开源发布\n\nStability AI 于 2022 年 8 月 22 日将 Stable Diffusion 模型权重开源，成为 AI 图像生成领域的里程碑事件。\n\n### 关键特性\n- **完全开源**：模型权重、代码全部公开\n- **本地运行**：可在消费级 GPU 上运行\n- **社区生态**：催生了 ControlNet、LoRA 等丰富的生态系统\n\n### 影响\nStable Diffusion 的开源让 AI 图像生成从闭锁走向开放，构建了目前最大的 AI 图像生成社区。",
+    "tags": [
+      "图像生成",
+      "开源",
+      "StabilityAI",
+      "里程碑"
+    ],
+    "source_urls": [
+      "https://stability.ai/blog/stable-diffusion-public-release"
+    ],
+    "impact_score": 9,
+    "category": "模型发布"
+  },
+  {
+    "title": "OpenAI 发布 ChatGPT",
+    "event_date": "2022-11-30",
+    "content_md": "## OpenAI 发布 ChatGPT\n\nOpenAI 发布 ChatGPT，基于 GPT-3.5 的对话 AI，通过 RLHF 训练。发布 5 天内用户突破 100 万，2 个月达到 1 亿用户，成为史上增长最快的消费者应用，引发全球 AI 热潮。",
+    "tags": [
+      "OpenAI",
+      "对话AI",
+      "里程碑",
+      "GPT"
+    ],
+    "source_urls": [
+      "https://openai.com/blog/chatgpt/"
+    ],
+    "impact_score": 10,
+    "category": "产品发布",
+    "id": "event-openai-chatgpt-2022-11-30"
+  },
+  {
+    "id": "chatgpt-launch",
+    "title": "ChatGPT 上线",
+    "event_date": "2022-11-30",
+    "content_md": "## ChatGPT 上线\n\nOpenAI 于 2022 年 11 月 30 日推出 ChatGPT，基于 GPT-3.5 微调的对话模型，5 天内用户突破 100 万。\n\n### 关键数据\n- **5 天**：达到 100 万用户\n- **2 个月**：达到 1 亿活跃用户\n- **免费开放**：初期完全免费使用\n\n### 影响\nChatGPT 的爆火让大语言模型从学术圈走向大众，开启了 AI 应用的寒武纪大爆发。",
+    "tags": [
+      "LLM",
+      "OpenAI",
+      "对话AI",
+      "里程碑"
+    ],
+    "source_urls": [
+      "https://openai.com/blog/chatgpt"
+    ],
+    "impact_score": 10,
+    "category": "产品发布"
+  },
+  {
+    "title": "Meta 开源 LLaMA 大语言模型",
+    "event_date": "2023-02-24",
+    "content_md": "## Meta 开源 LLaMA 大语言模型\n\nMeta 发布 LLaMA（Large Language Model Meta AI），参数规模从 7B 到 65B。模型权重泄露后在开源社区引发连锁反应，催生了 Alpaca、Vicuna 等一系列开源模型，推动了开源 LLM 生态的爆发。",
+    "tags": [
+      "Meta",
+      "开源",
+      "LLM",
+      "里程碑"
+    ],
+    "source_urls": [
+      "https://ai.meta.com/blog/large-language-model-llama/"
+    ],
+    "impact_score": 9,
+    "category": "开源发布",
+    "id": "event-meta-llama-2023-02-24"
+  },
+  {
+    "id": "llama-release",
+    "title": "Meta 发布 LLaMA",
+    "event_date": "2023-02-24",
+    "content_md": "## Meta 发布 LLaMA\n\nMeta 于 2023 年 2 月 24 日发布 LLaMA（Large Language Model Meta AI），一系列从 7B 到 65B 参数量的开源语言模型。\n\n### 关键特性\n- **开源权重**：研究用途可申请获取模型权重\n- **多规模**：7B、13B、33B、65B 四种规模\n- **高效训练**：使用公开数据集训练，训练效率优化\n\n### 影响\nLLaMA 的发布（特别是后续权重泄露事件）直接引爆了开源大模型社区，催生了 Alpaca、Vicuna、WizardLM 等一系列优秀模型。",
+    "tags": [
+      "开源模型",
+      "Meta",
+      "LLM",
+      "里程碑"
+    ],
+    "source_urls": [
+      "https://ai.meta.com/blog/large-language-model-llama-meta-ai/"
+    ],
+    "impact_score": 9,
+    "category": "模型发布"
+  },
+  {
+    "title": "OpenAI 发布 GPT-4 多模态大模型",
+    "event_date": "2023-03-14",
+    "content_md": "## OpenAI 发布 GPT-4 多模态大模型\n\nOpenAI 发布 GPT-4，首个大规模多模态模型，可接受图像和文本输入，在各种专业和学术基准上展现人类水平表现。在模拟律师资格考试中得分位于前 10% 考生之列。",
+    "tags": [
+      "OpenAI",
+      "多模态",
+      "GPT",
+      "里程碑"
+    ],
+    "source_urls": [
+      "https://openai.com/research/gpt-4"
+    ],
+    "impact_score": 10,
+    "category": "模型发布",
+    "id": "event-openai-gpt-4-2023-03-14"
+  },
+  {
+    "id": "gpt4-launch",
+    "title": "GPT-4 发布",
+    "event_date": "2023-03-14",
+    "content_md": "## GPT-4 发布\n\nOpenAI 于 2023 年 3 月 14 日正式发布 GPT-4，这是一个大型多模态模型，能够接受图像和文本输入，输出文本回答。\n\n### 关键特性\n- **多模态输入**：支持图像理解\n- **更长上下文**：支持 32K token 上下文窗口\n- **更安全**：相比 GPT-3.5，幻觉率降低 40%\n- **考试表现**：在模拟律师资格考试中排名前 10%\n\n### 影响\nGPT-4 的发布标志着大语言模型从纯文本走向多模态的重要里程碑，推动了整个 AI 行业的升级换代。",
+    "tags": [
+      "LLM",
+      "OpenAI",
+      "多模态",
+      "里程碑"
+    ],
+    "source_urls": [
+      "https://openai.com/research/gpt-4"
+    ],
+    "impact_score": 10,
+    "category": "模型发布"
+  },
+  {
+    "title": "Midjourney V5 引入逼真图像生成",
+    "event_date": "2023-03-15",
+    "content_md": "## Midjourney V5 引入逼真图像生成\n\nMidjourney 发布 V5 版本，大幅提升图像逼真度和手部细节，支持更高质量的艺术和摄影风格生成。该版本使 AI 图像生成在专业创意领域获得广泛采用。",
+    "tags": [
+      "AIGC",
+      "图像生成",
+      "Midjourney"
+    ],
+    "source_urls": [
+      "https://midjourney.com/",
+      "https://www.midjourney.com"
+    ],
+    "impact_score": 8,
+    "category": "模型发布",
+    "id": "event-midjourney-v5-2023-03-15"
+  },
+  {
+    "id": "copilot-x-announce",
+    "title": "GitHub Copilot X 发布",
+    "event_date": "2023-03-22",
+    "content_md": "## GitHub Copilot X 发布\n\nGitHub 于 2023 年 3 月 22 日宣布 Copilot X，集成 GPT-4，将 AI 编程助手带入新阶段。\n\n### 关键特性\n- **GPT-4 驱动**：基于最新 GPT-4 模型\n- **对话式编程**：支持在 IDE 中进行自然语言对话\n- **文档生成**：自动生成代码文档和测试\n- **PR 摘要**：自动生成 Pull Request 描述\n\n### 影响\nCopilot X 标志着 AI 编程助手从代码补全进化到全流程辅助，极大提升开发者生产力。",
+    "tags": [
+      "AI编程",
+      "GitHub",
+      "开发者工具"
+    ],
+    "source_urls": [
+      "https://github.blog/2023-03-22-github-copilot-x-the-ai-powered-developer-experience/"
+    ],
+    "impact_score": 8,
+    "category": "产品发布"
+  },
+  {
+    "title": "DeepMind AlphaDev 发现更快排序算法",
+    "event_date": "2023-06-07",
+    "content_md": "## DeepMind AlphaDev 发现更快排序算法\n\nDeepMind 的 AlphaDev 使用 RL 发现了比人类优化数十年的排序算法更快的方案，新增的排序指令被纳入 LLVM 标准库。这是 AI 在算法发现领域的重要里程碑。",
+    "tags": [
+      "DeepMind",
+      "科学AI",
+      "里程碑"
+    ],
+    "source_urls": [
+      "https://deepmind.google/discover/blog/alphadev-discovers-faster-sorting-algorithms/"
+    ],
+    "impact_score": 8,
+    "category": "科学突破",
+    "id": "event-deepmind-alphadev-2023-06-07"
+  },
+  {
+    "title": "OpenAI 开放 GPT-4 API",
+    "event_date": "2023-07-06",
+    "content_md": "## OpenAI 开放 GPT-4 API\n\nOpenAI 向所有付费 API 用户开放 GPT-4 访问，此前仅限等待名单用户。GPT-4 API 的开放加速了基于大模型的应用生态爆发。",
+    "tags": [
+      "OpenAI",
+      "GPT",
+      "产品发布"
+    ],
+    "source_urls": [
+      "https://openai.com/blog/gpt-4-api-general-availability"
+    ],
+    "impact_score": 8,
+    "category": "产品发布",
+    "id": "event-openai-gpt-4-api-2023-07-06"
+  },
+  {
+    "title": "Anthropic 发布 Claude 2",
+    "event_date": "2023-07-11",
+    "content_md": "## Anthropic 发布 Claude 2\n\nAnthropic 发布 Claude 2，上下文窗口扩展至 100K token，支持上传文件和长文档分析。Claude 2 以安全性和有用性著称，在编程和写作任务上表现突出。",
+    "tags": [
+      "LLM",
+      "长上下文",
+      "对话AI",
+      "Anthropic"
+    ],
+    "source_urls": [
+      "https://www.anthropic.com/index/claude-2",
+      "https://www.anthropic.com/news/claude-2"
+    ],
+    "impact_score": 8,
+    "category": "模型发布",
+    "id": "event-anthropic-claude-2-2023-07-11"
+  },
+  {
+    "title": "OpenAI 发布 DALL-E 3",
+    "event_date": "2023-10-03",
+    "content_md": "## OpenAI 发布 DALL-E 3\n\nOpenAI 发布 DALL-E 3，集成到 ChatGPT 中，文本理解能力大幅提升，能精确遵循复杂提示词生成图像。降低了 AI 图像创作的门槛。",
+    "tags": [
+      "OpenAI",
+      "图像生成",
+      "产品发布"
+    ],
+    "source_urls": [
+      "https://openai.com/dall-e-3"
+    ],
+    "impact_score": 8,
+    "category": "模型发布",
+    "id": "event-openai-dall-e-3-2023-10-03"
+  },
+  {
+    "title": "xAI 发布 Grok 大语言模型",
+    "event_date": "2023-11-04",
+    "content_md": "## xAI 发布 Grok 大语言模型\n\nElon Musk 创立的 xAI 发布 Grok，集成到 X（原 Twitter）平台。Grok 以幽默和实时信息获取为特色，能访问 X 平台的实时数据。标志着社交媒体平台与 AI 的深度融合。",
+    "tags": [
+      "对话AI",
+      "产品发布"
+    ],
+    "source_urls": [
+      "https://x.ai/blog/grok"
+    ],
+    "impact_score": 7,
+    "category": "模型发布",
+    "id": "event-xai-grok-2023-11-04"
+  },
+  {
+    "title": "Google 发布 Gemini 多模态模型",
+    "event_date": "2023-12-06",
+    "content_md": "## Google 发布 Gemini 多模态模型\n\nGoogle DeepMind 发布 Gemini 模型系列（Ultra/Pro/Nano），在 MMLU 等基准上首次超越 GPT-4。Gemini 原生支持多模态推理，标志着 Google 在大模型竞赛中重新追赶。",
+    "tags": [
+      "LLM",
+      "Google",
+      "里程碑",
+      "多模态"
+    ],
+    "source_urls": [
+      "https://blog.google/technology/ai/google-gemini-ai/"
+    ],
+    "impact_score": 9,
+    "category": "模型发布",
+    "id": "event-google-gemini-2023-12-06"
+  },
+  {
+    "title": "OpenAI 发布 Sora 视频生成模型",
+    "event_date": "2024-02-15",
+    "content_md": "## OpenAI 发布 Sora 视频生成模型\n\nOpenAI 发布 Sora，能根据文本描述生成长达 60 秒的高质量视频。Sora 展示了对物理世界的理解能力，被视为通向世界模型的重要一步。",
+    "tags": [
+      "里程碑",
+      "视频生成",
+      "OpenAI",
+      "多模态"
+    ],
+    "source_urls": [
+      "https://openai.com/research/video-generation-models-as-world-simulators",
+      "https://openai.com/sora"
+    ],
+    "impact_score": 9,
+    "category": "模型发布",
+    "id": "event-openai-sora-2024-02-15"
+  },
+  {
+    "title": "Anthropic 发布 Claude 3 模型家族",
+    "event_date": "2024-03-04",
+    "content_md": "## Anthropic 发布 Claude 3 模型家族\n\nAnthropic 发布 Claude 3 系列（Haiku/Sonnet/Opus），Opus 在多项基准上首次超越 GPT-4。200K 上下文窗口，强大多模态理解能力，确立了 Anthropic 在顶级 LLM 竞争中的地位。",
+    "tags": [
+      "Anthropic",
+      "LLM",
+      "多模态"
+    ],
+    "source_urls": [
+      "https://www.anthropic.com/news/claude-3-family"
+    ],
+    "impact_score": 9,
+    "category": "模型发布",
+    "id": "event-anthropic-claude-3-2024-03-04"
+  },
+  {
+    "title": "欧盟通过 AI 法案",
+    "event_date": "2024-03-13",
+    "content_md": "## 欧盟通过 AI 法案\n\n欧洲议会通过全球首部全面 AI 监管法案，按风险等级对 AI 系统分类监管。高风险 AI 系统需通过合规审查，生成式 AI 需标注内容来源。该法案为全球 AI 治理树立了重要先例。",
+    "tags": [
+      "政策法规",
+      "里程碑"
+    ],
+    "source_urls": [
+      "https://www.europarl.europa.eu/news/en/press-room/20240308IPR19012/artificial-intelligence-act"
+    ],
+    "impact_score": 9,
+    "category": "政策法规",
+    "id": "event-ai-2024-03-13"
+  },
+  {
+    "id": "ai-act-passed",
+    "title": "EU AI Act 通过",
+    "event_date": "2024-03-13",
+    "content_md": "## 欧盟 AI 法案通过\n\n欧洲议会于 2024 年 3 月 13 日正式通过《人工智能法案》，这是全球首部全面的 AI 监管法律。\n\n### 核心要点\n- **风险分级**：按风险等级分类管理 AI 系统\n- **透明度要求**：强制标注 AI 生成内容\n- **禁令清单**：禁止社会评分等高风险应用\n- **通用模型义务**：对基础模型提出额外要求\n\n### 影响\nEU AI Act 为全球 AI 监管树立了标杆，将深刻影响 AI 企业的合规策略和产品开发。",
+    "tags": [
+      "政策法规",
+      "欧盟",
+      "AI治理",
+      "里程碑"
+    ],
+    "source_urls": [
+      "https://www.europarl.europa.eu/topics/en/article/20240313"
+    ],
+    "impact_score": 8,
+    "category": "政策法规"
+  },
+  {
+    "title": "NVIDIA 发布 Blackwell GPU 架构",
+    "event_date": "2024-03-18",
+    "content_md": "## NVIDIA 发布 Blackwell GPU 架构\n\nNVIDIA 在 GTC 2024 上发布 Blackwell 架构，B200 GPU 提供 20 petaFLOPS FP4 算力，是 H100 的 5 倍。专为训练和推理万亿参数模型设计，进一步巩固 NVIDIA 在 AI 算力领域的垄断地位。",
+    "tags": [
+      "里程碑"
+    ],
+    "source_urls": [
+      "https://nvidianews.nvidia.com/news/nvidia-blackwell"
+    ],
+    "impact_score": 8,
+    "category": "产品发布",
+    "id": "event-nvidia-blackwell-gpu-2024-03-18"
+  },
+  {
+    "title": "Meta 发布 Llama 3 开源模型",
+    "event_date": "2024-04-18",
+    "content_md": "## Meta 发布 Llama 3 开源模型\n\nMeta 发布 Llama 3，8B 和 70B 两个规模。8B 模型在同级别中表现最佳，70B 模型在多项基准上超越 GPT-3.5。Llama 3 延续 Meta 的开源策略，进一步推动开源 LLM 生态。",
+    "tags": [
+      "Meta",
+      "开源",
+      "LLM"
+    ],
+    "source_urls": [
+      "https://ai.meta.com/blog/meta-llama-3/"
+    ],
+    "impact_score": 9,
+    "category": "开源发布",
+    "id": "event-meta-llama-3-2024-04-18"
+  },
+  {
+    "title": "OpenAI 发布 GPT-4o 多模态旗舰模型",
+    "event_date": "2024-05-13",
+    "content_md": "## OpenAI 发布 GPT-4o 多模态旗舰模型\n\nOpenAI 发布 GPT-4o（omni），原生支持文本、图像、音频输入输出，响应延迟降至毫秒级，语音交互体验接近人类。免费用户也能使用，大幅降低了多模态 AI 的使用门槛。",
+    "tags": [
+      "OpenAI",
+      "多模态",
+      "GPT"
+    ],
+    "source_urls": [
+      "https://openai.com/index/hello-gpt-4o/"
+    ],
+    "impact_score": 9,
+    "category": "模型发布",
+    "id": "event-openai-gpt-4o-2024-05-13"
+  },
+  {
+    "title": "Google 发布 Veo 视频生成模型",
+    "event_date": "2024-05-14",
+    "content_md": "## Google 发布 Veo 视频生成模型\n\nGoogle 在 I/O 大会上发布 Veo 视频生成模型，可生成超过 60 秒的 1080p 高质量视频，支持电影级视觉特效和风格控制。与 Sora 形成竞争。",
+    "tags": [
+      "Google",
+      "视频生成"
+    ],
+    "source_urls": [
+      "https://deepmind.google/technologies/veo/"
+    ],
+    "impact_score": 8,
+    "category": "模型发布",
+    "id": "event-google-veo-2024-05-14"
+  },
+  {
+    "title": "Apple 发布 Apple Intelligence",
+    "event_date": "2024-06-10",
+    "content_md": "## Apple 发布 Apple Intelligence\n\nApple 在 WWDC 2024 上发布 Apple Intelligence，集成到 iOS 18/macOS Sequoia 中。结合端侧小模型和云端大模型（与 OpenAI 合作），实现智能通知摘要、写作工具、图像生成等功能，标志着 Apple 正式进入 AI 助手领域。",
+    "tags": [
+      "产品发布",
+      "多模态"
+    ],
+    "source_urls": [
+      "https://www.apple.com/newsroom/2024/06/apple-intelligence-puts-generative-ai-at-the-heart-of-apple-devices/"
+    ],
+    "impact_score": 8,
+    "category": "产品发布",
+    "id": "event-apple-apple-intelligence-2024-06-10"
+  },
+  {
+    "title": "Anthropic 发布 Claude 3.5 Sonnet",
+    "event_date": "2024-06-20",
+    "content_md": "## Anthropic 发布 Claude 3.5 Sonnet\n\nAnthropic 发布 Claude 3.5 Sonnet，在编码、推理和视觉理解方面大幅超越 Claude 3 Opus，同时成本更低、速度更快。引入 Artifacts 功能，支持实时预览生成内容。",
+    "tags": [
+      "Anthropic",
+      "LLM",
+      "AI编程"
+    ],
+    "source_urls": [
+      "https://www.anthropic.com/news/claude-3-5-sonnet"
+    ],
+    "impact_score": 8,
+    "category": "模型发布",
+    "id": "event-anthropic-claude-3-5-sonnet-2024-06-20"
+  },
+  {
+    "title": "Google DeepMind 发布 AlphaProof 和 AlphaGeometry 2",
+    "event_date": "2024-07-25",
+    "content_md": "## Google DeepMind 发布 AlphaProof 和 AlphaGeometry 2\n\nDeepMind 发布 AlphaProof 和 AlphaGeometry 2，AI 系统首次在国际数学奥林匹克竞赛中达到银牌水平，解决了 4/6 道题目。这标志着 AI 在高级数学推理方面取得重大突破。",
+    "tags": [
+      "DeepMind",
+      "科学AI",
+      "里程碑"
+    ],
+    "source_urls": [
+      "https://deepmind.google/discover/blog/ai-solves-imo-problems-at-silver-medal-level/"
+    ],
+    "impact_score": 9,
+    "category": "科学突破",
+    "id": "event-google-deepmind-alphaproof-alphageometry-2024-07-25"
+  },
+  {
+    "title": "OpenAI 发布 o1 推理模型",
+    "event_date": "2024-09-12",
+    "content_md": "## OpenAI 发布 o1 推理模型\n\nOpenAI 发布 o1 系列（前称 Strawberry），采用链式思维（chain-of-thought）推理范式。o1 在数学、编程和科学推理任务上大幅超越 GPT-4o，在编程竞赛中排名前 89%，标志着 LLM 从快速响应向深度推理的范式转变。",
+    "tags": [
+      "OpenAI",
+      "里程碑",
+      "LLM"
+    ],
+    "source_urls": [
+      "https://openai.com/index/introducing-openai-o1-preview/"
+    ],
+    "impact_score": 9,
+    "category": "模型发布",
+    "id": "event-openai-o1-2024-09-12"
+  },
+  {
+    "title": "Google 发布 Gemini 2.0 系列模型",
+    "event_date": "2024-12-11",
+    "content_md": "## Google 发布 Gemini 2.0 系列模型\n\nGoogle DeepMind 发布 Gemini 2.0 Flash，原生支持多模态输入输出和工具调用，速度比 1.5 Flash 快两倍。后续推出 Gemini 2.0 Pro 和 Ultra 版本，在推理和编码基准上取得领先。",
+    "tags": [
+      "Google",
+      "多模态",
+      "LLM"
+    ],
+    "source_urls": [
+      "https://blog.google/technology/google-deepmind/gemini-model-thinking-updates-march-2025/"
+    ],
+    "impact_score": 8,
+    "category": "模型发布",
+    "id": "event-google-gemini-2-0-2024-12-11"
+  },
+  {
+    "title": "DeepSeek-V3 开源 MoE 大模型",
+    "event_date": "2024-12-26",
+    "content_md": "## DeepSeek-V3 开源 MoE 大模型\n\n中国 AI 公司 DeepSeek 开源 DeepSeek-V3，671B 参数 MoE 架构（激活 37B），训练成本仅 557 万美元。性能媲美 GPT-4o 和 Claude 3.5 Sonnet，引发全球对 AI 训练效率的重新审视。",
+    "tags": [
+      "开源",
+      "LLM",
+      "里程碑"
+    ],
+    "source_urls": [
+      "https://github.com/deepseek-ai/DeepSeek-V3"
+    ],
+    "impact_score": 9,
+    "category": "开源发布",
+    "id": "event-deepseek-v3-moe-2024-12-26"
+  },
+  {
+    "title": "DeepSeek-R1 开源推理模型",
+    "event_date": "2025-01-20",
+    "content_md": "## DeepSeek-R1 开源推理模型\n\nDeepSeek 开源 R1 推理模型，通过纯 RL 训练自发涌现链式推理能力，性能与 OpenAI o1 相当。模型权重和训练细节完全开源，极大推动了开源推理模型研究。",
+    "tags": [
+      "开源",
+      "LLM",
+      "里程碑"
+    ],
+    "source_urls": [
+      "https://github.com/deepseek-ai/DeepSeek-R1"
+    ],
+    "impact_score": 9,
+    "category": "开源发布",
+    "id": "event-deepseek-r1-2025-01-20"
+  },
+  {
+    "title": "Google 发布 Gemini 2.5 Pro",
+    "event_date": "2025-03-25",
+    "content_md": "## Google 发布 Gemini 2.5 Pro\n\nGoogle DeepMind 发布 Gemini 2.5 Pro，首个在 LMArena 排行榜登顶的推理模型。支持 1M token 上下文窗口，内置深度思考能力，在编码、数学和科学推理基准上取得领先。",
+    "tags": [
+      "Google",
+      "LLM",
+      "多模态"
+    ],
+    "source_urls": [
+      "https://blog.google/technology/google-deepmind/gemini-model-thinking-updates-march-2025/"
+    ],
+    "impact_score": 8,
+    "category": "模型发布",
+    "id": "event-google-gemini-2-5-pro-2025-03-25"
+  },
+  {
+    "title": "Meta 发布 Llama 4 系列模型",
+    "event_date": "2025-04-05",
+    "content_md": "## Meta 发布 Llama 4 系列模型\n\nMeta 发布 Llama 4 系列，包括 Scout 和 Maverick 两个 MoE 模型，以及 2T 参数的 Behemoth 在训练中。Scout 支持 10M token 超长上下文，Maverick 在多项基准上表现优异。Llama 4 延续 Meta 的开源战略。",
+    "tags": [
+      "Meta",
+      "开源",
+      "LLM"
+    ],
+    "source_urls": [
+      "https://ai.meta.com/blog/llama-4/"
+    ],
+    "impact_score": 8,
+    "category": "开源发布",
+    "id": "event-meta-llama-4-2025-04-05"
+  },
+  {
+    "title": "OpenAI 发布 GPT-4.1 和 o4-mini",
+    "event_date": "2025-04-14",
+    "content_md": "## OpenAI 发布 GPT-4.1 和 o4-mini\n\nOpenAI 发布 GPT-4.1（旗舰指令遵循模型）和 o4-mini（高效推理模型）。GPT-4.1 在编码和指令遵循方面显著优于 GPT-4o，o4-mini 在推理任务上性价比极高。同日宣布完成 400 亿美元融资。",
+    "tags": [
+      "OpenAI",
+      "GPT",
+      "LLM"
+    ],
+    "source_urls": [
+      "https://openai.com/index/gpt-4-1/"
+    ],
+    "impact_score": 8,
+    "category": "模型发布",
+    "id": "event-openai-gpt-4-1-o4-mini-2025-04-14"
+  },
+  {
+    "title": "OpenAI 发布 Codex CLI 编程工具",
+    "event_date": "2025-05-16",
+    "content_md": "## OpenAI 发布 Codex CLI 编程工具\n\nOpenAI 发布 Codex CLI（现为 Claude Code 的竞品），终端中的 AI 编程代理，可自主完成代码编写、测试和调试任务。标志着 AI 编程助手从补全走向自主代理的新阶段。",
+    "tags": [
+      "OpenAI",
+      "AI编程",
+      "产品发布"
+    ],
+    "source_urls": [
+      "https://openai.com/index/codex/"
+    ],
+    "impact_score": 8,
+    "category": "产品发布",
+    "id": "event-openai-codex-cli-2025-05-16"
+  },
+  {
+    "title": "Anthropic 发布 Claude 4 系列",
+    "event_date": "2025-05-22",
+    "content_md": "## Anthropic 发布 Claude 4 系列\n\nAnthropic 发布 Claude Opus 4 和 Claude Sonnet 4。Opus 4 是最强编码和推理模型，可连续工作数小时处理复杂任务；Sonnet 4 在编码和推理上大幅超越 3.5 Sonnet。引入 Agentic 能力和扩展思考模式。",
+    "tags": [
+      "Anthropic",
+      "LLM",
+      "里程碑"
+    ],
+    "source_urls": [
+      "https://www.anthropic.com/news/claude-4"
+    ],
+    "impact_score": 9,
+    "category": "模型发布",
+    "id": "event-anthropic-claude-4-2025-05-22"
+  }
+]
