@@ -281,18 +281,18 @@ function TimelineCanvas({
 
     const horizon = ctx.createLinearGradient(0, axisY - 260, 0, axisY + 260);
     horizon.addColorStop(0, isDay ? "rgba(255,255,255,0)" : "rgba(91,141,239,0)");
-    horizon.addColorStop(0.38, isDay ? "rgba(104,145,210,0.045)" : "rgba(91,141,239,0.05)");
-    horizon.addColorStop(0.5, isDay ? "rgba(156,111,58,0.07)" : "rgba(240,192,96,0.12)");
-    horizon.addColorStop(0.62, isDay ? "rgba(130,121,176,0.04)" : "rgba(139,92,246,0.055)");
+    horizon.addColorStop(0.38, isDay ? "rgba(92,128,178,0.04)" : "rgba(91,141,239,0.05)");
+    horizon.addColorStop(0.5, isDay ? "rgba(158,132,78,0.06)" : "rgba(240,192,96,0.12)");
+    horizon.addColorStop(0.62, isDay ? "rgba(118,108,168,0.035)" : "rgba(139,92,246,0.055)");
     horizon.addColorStop(1, isDay ? "rgba(255,255,255,0)" : "rgba(91,141,239,0)");
     ctx.fillStyle = horizon;
     ctx.fillRect(0, axisY - 260, width, 520);
 
     ctx.save();
-    ctx.strokeStyle = isDay ? "rgba(98,92,82,0.22)" : "rgba(240,192,96,0.34)";
-    ctx.lineWidth = isDay ? 1.15 : 1;
+    ctx.strokeStyle = isDay ? "rgba(108,102,92,0.18)" : "rgba(240,192,96,0.34)";
+    ctx.lineWidth = isDay ? 1.1 : 1;
     ctx.shadowBlur = isDay ? 0 : 18;
-    ctx.shadowColor = isDay ? "rgba(98,92,82,0)" : "rgba(240,192,96,0.28)";
+    ctx.shadowColor = isDay ? "rgba(108,102,92,0)" : "rgba(240,192,96,0.28)";
     ctx.beginPath();
     ctx.moveTo(0, axisY);
     ctx.lineTo(width, axisY);
@@ -304,7 +304,7 @@ function TimelineCanvas({
         radius: ORBIT_RADIUS.year,
         opacity: 1,
         step: ANGLE_STEP.year / Math.max(layout.yearGap, 1),
-        rgb: isDay ? "150,113,62" : "240,192,96",
+        rgb: isDay ? "158,132,78" : "240,192,96",
         frontAlpha: isDay ? 0.2 : 0.24,
         backAlpha: isDay ? 0.1 : 0.12,
         frontBlur: isDay ? 0 : 20,
@@ -316,7 +316,7 @@ function TimelineCanvas({
         radius: ORBIT_RADIUS.month,
         opacity: layout.monthReveal,
         step: ANGLE_STEP.month / Math.max(layout.monthGap, 1),
-        rgb: isDay ? "82,119,179" : "91,141,239",
+        rgb: isDay ? "78,112,178" : "91,141,239",
         frontAlpha: isDay ? 0.18 : 0.22,
         backAlpha: isDay ? 0.08 : 0.1,
         frontBlur: isDay ? 0 : 18,
@@ -330,7 +330,7 @@ function TimelineCanvas({
         step:
           ANGLE_STEP.day /
           Math.max(layout.daySpread > 0 ? layout.daySpread : layout.monthGap, 1),
-        rgb: isDay ? "118,109,170" : "139,92,246",
+        rgb: isDay ? "112,104,162" : "139,92,246",
         frontAlpha: isDay ? 0.12 : 0.18,
         backAlpha: isDay ? 0.055 : 0.08,
         frontBlur: isDay ? 0 : 16,
@@ -383,9 +383,9 @@ function TimelineCanvas({
       190,
     );
     if (isDay) {
-      centerGlow.addColorStop(0, "rgba(255,255,255,0.04)");
-      centerGlow.addColorStop(0.28, "rgba(156,111,58,0.035)");
-      centerGlow.addColorStop(0.6, "rgba(82,119,179,0.025)");
+      centerGlow.addColorStop(0, "rgba(255,255,255,0.03)");
+      centerGlow.addColorStop(0.28, "rgba(158,132,78,0.03)");
+      centerGlow.addColorStop(0.6, "rgba(78,112,178,0.02)");
       centerGlow.addColorStop(1, "rgba(255,255,255,0)");
     } else {
       centerGlow.addColorStop(0, "rgba(255,236,180,0.28)");
@@ -1050,7 +1050,7 @@ export function Timeline({
       >
         <div className={`flex flex-col gap-3 rounded-[28px] border p-3 backdrop-blur-2xl lg:flex-row lg:items-center lg:justify-between lg:p-4 ${
           isDay
-            ? "border-cosmos-border/55 bg-cosmos-card/88 shadow-[0_16px_46px_rgba(84,75,62,0.09)]"
+            ? "border-cosmos-border/45 bg-cosmos-card/92 shadow-[0_14px_42px_rgba(72,64,52,0.07)]"
             : "border-cosmos-border/35 bg-cosmos-surface/72 shadow-[0_0_42px_rgba(255,255,255,0.08)]"
         }`}>
           <div className="min-w-0">
@@ -1072,7 +1072,7 @@ export function Timeline({
 
           <div className={`grid shrink-0 grid-cols-3 gap-2 rounded-[24px] border p-1.5 ${
             isDay
-              ? "border-cosmos-border/50 bg-white/78 shadow-[inset_0_0_18px_rgba(90,80,64,0.06)]"
+              ? "border-cosmos-border/42 bg-white/82 shadow-[inset_0_0_16px_rgba(72,64,52,0.04)]"
               : "border-cosmos-border/35 bg-cosmos-card/60 shadow-[inset_0_0_24px_rgba(255,255,255,0.03)]"
           }`}>
             {scaleOptions.map((option) => {
@@ -1117,7 +1117,7 @@ export function Timeline({
         <div
           className={`absolute left-1/2 z-30 h-24 w-[220px] -translate-x-1/2 -translate-y-1/2 ${
             isDay
-              ? "bg-[radial-gradient(ellipse_at_center,rgba(166,128,69,0.08)_0%,rgba(104,145,210,0.035)_36%,transparent_72%)]"
+              ? "bg-[radial-gradient(ellipse_at_center,rgba(168,142,82,0.06)_0%,rgba(92,128,178,0.03)_36%,transparent_72%)]"
               : "bg-[radial-gradient(ellipse_at_center,rgba(255,238,190,0.42)_0%,rgba(240,192,96,0.14)_24%,rgba(91,141,239,0.07)_48%,transparent_72%)] blur-sm"
           }`}
           style={{ top: axisY }}
@@ -1148,7 +1148,7 @@ export function Timeline({
             (0.66 + depth * 0.5 + (isFocused ? 0.24 : 0)) * visibilityScale;
           const labelOffset = renderY < 0 ? -50 : 38;
           const labelWidth =
-            node.unit === "year" ? 150 : node.unit === "month" ? 112 : 78;
+            node.unit === "year" ? (isDay ? 108 : 150) : node.unit === "month" ? (isDay ? 84 : 112) : (isDay ? 68 : 78);
           const showLabelCard =
             reveal > 0.35 && (isFocused || hasEvents || node.unit === "year");
           const accent =
@@ -1254,8 +1254,8 @@ export function Timeline({
                     ? hasEvents
                       ? `radial-gradient(circle at 32% 24%, rgba(255,255,255,1) 0%, ${accent.replace("ALPHA", isMajor ? "0.72" : "0.5")} 20%, rgba(255,255,255,0.82) 55%, ${accent.replace("ALPHA", "0.22")} 100%)`
                       : node.unit === "month"
-                        ? "radial-gradient(circle at 35% 25%, rgba(255,255,255,1), rgba(76,118,188,0.32) 58%, rgba(224,231,242,0.95) 100%)"
-                        : "radial-gradient(circle at 35% 25%, rgba(255,255,255,1), rgba(154,111,53,0.3) 58%, rgba(232,224,212,0.98) 100%)"
+                        ? "radial-gradient(circle at 35% 25%, rgba(255,255,255,1), rgba(72,112,182,0.28) 58%, rgba(228,234,245,0.95) 100%)"
+                        : "radial-gradient(circle at 35% 25%, rgba(255,255,255,1), rgba(158,128,72,0.26) 58%, rgba(238,236,230,0.98) 100%)"
                     : hasEvents
                       ? `radial-gradient(circle at 30% 24%, rgba(255,255,255,0.96) 0%, ${accent.replace("ALPHA", isMajor ? "0.9" : "0.68")} 18%, ${accent.replace("ALPHA", "0.32")} 58%, rgba(3,4,10,0.36) 100%)`
                       : node.unit === "month"
@@ -1264,9 +1264,9 @@ export function Timeline({
                   boxShadow: isDay
                     ? hasEvents
                       ? isFocused || isHighlighted
-                        ? `0 0 ${nodeSize * 0.72}px ${accent.replace("ALPHA", "0.28")}, 0 10px 22px rgba(80,72,62,0.16), inset 0 0 ${nodeSize * 0.18}px rgba(255,255,255,0.58)`
-                        : `0 0 ${nodeSize * (isStrong ? 0.48 : 0.28)}px ${accent.replace("ALPHA", isStrong ? "0.16" : "0.08")}, 0 8px 18px rgba(80,72,62,0.14), inset 0 1px 0 rgba(255,255,255,0.56)`
-                      : "0 10px 20px rgba(80,72,62,0.2), inset 0 1px 0 rgba(255,255,255,0.78)"
+                        ? `0 0 ${nodeSize * 0.72}px ${accent.replace("ALPHA", "0.28")}, 0 8px 18px rgba(72,64,52,0.1), inset 0 0 ${nodeSize * 0.18}px rgba(255,255,255,0.58)`
+                        : `0 0 ${nodeSize * (isStrong ? 0.48 : 0.28)}px ${accent.replace("ALPHA", isStrong ? "0.16" : "0.08")}, 0 6px 14px rgba(72,64,52,0.08), inset 0 1px 0 rgba(255,255,255,0.56)`
+                      : "0 8px 16px rgba(72,64,52,0.1), inset 0 1px 0 rgba(255,255,255,0.78)"
                     : hasEvents
                       ? isFocused || isHighlighted
                         ? `0 0 ${nodeSize * 1.75}px ${accent.replace("ALPHA", "0.72")}, inset 0 0 ${nodeSize * 0.45}px rgba(255,255,255,0.28)`
@@ -1285,18 +1285,18 @@ export function Timeline({
               >
                 {showLabelCard ? (
                   <div
-                    className={`rounded-2xl border px-3 py-2 text-center backdrop-blur-xl transition-all duration-300 ${
+                    className={`rounded-2xl border px-3 py-2 text-center transition-all duration-300 ${
                       isDay
                         ? isFocused
-                          ? "border-cosmos-gold/38 bg-white/92 shadow-[0_18px_42px_rgba(95,76,45,0.22)]"
+                          ? "border-cosmos-gold/30 bg-white shadow-[0_12px_32px_rgba(72,64,52,0.12)]"
                           : hasEvents
-                            ? "border-cosmos-border/48 bg-white/86 shadow-[0_14px_34px_rgba(80,72,62,0.18)]"
-                            : "border-cosmos-border/34 bg-white/64 shadow-[0_10px_24px_rgba(80,72,62,0.1)]"
-                        : isFocused
+                            ? "border-cosmos-border/36 bg-white/96 shadow-[0_8px_22px_rgba(72,64,52,0.08)]"
+                            : "border-cosmos-border/22 bg-white/78 shadow-[0_6px_16px_rgba(72,64,52,0.05)]"
+                        : "backdrop-blur-xl " + (isFocused
                           ? "border-cosmos-gold/40 shadow-[0_20px_58px_rgba(0,0,0,0.62),0_0_40px_rgba(212,168,83,0.14),inset_0_1px_0_rgba(255,255,255,0.1)]"
                           : hasEvents
                             ? "border-cosmos-border/32 shadow-[0_14px_40px_rgba(0,0,0,0.42),inset_0_1px_0_rgba(255,255,255,0.06)]"
-                            : "border-cosmos-border/22 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
+                            : "border-cosmos-border/22 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]")
                     }`}
                     style={
                       isDay
@@ -1360,7 +1360,11 @@ export function Timeline({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.96 }}
             transition={{ duration: 0.18 }}
-            className="pointer-events-none fixed z-50 w-[300px] max-w-[calc(100vw-32px)] rounded-3xl border border-white/[0.09] bg-cosmos-surface/90 p-4 shadow-[0_24px_90px_rgba(0,0,0,0.58)] backdrop-blur-2xl"
+            className={`pointer-events-none fixed z-50 w-[300px] max-w-[calc(100vw-32px)] rounded-3xl border p-4 shadow-[0_24px_90px_rgba(0,0,0,0.58)] backdrop-blur-2xl ${
+                  isDay
+                    ? "border-cosmos-border/36 bg-white/98 shadow-[0_16px_48px_rgba(72,64,52,0.12)]"
+                    : "border-white/[0.09] bg-cosmos-surface/90 shadow-[0_24px_90px_rgba(0,0,0,0.58)]"
+                }`}
             style={{
               left: Math.max(16, Math.min(tooltipPos.x - 150, winW - 316)),
               top: Math.max(100, Math.min(tooltipPos.y, winH - 230)),
@@ -1370,7 +1374,7 @@ export function Timeline({
               <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-cosmos-gold">
                 {unitCopy[hoveredNode.unit]} · {hoveredNode.label}
               </p>
-              <span className="rounded-full bg-cosmos-surface/60 px-2 py-0.5 font-mono text-[10px] text-cosmos-text-dim">
+              <span className={`rounded-full px-2 py-0.5 font-mono text-[10px] text-cosmos-text-dim ${isDay ? "bg-cosmos-surface/45" : "bg-cosmos-surface/60"}`}>
                 {hoveredNode.eventCount} Events
               </span>
             </div>
@@ -1379,7 +1383,9 @@ export function Timeline({
                 hoveredNode.events.slice(0, 3).map((event) => (
                   <div
                     key={event.id}
-                    className="rounded-2xl bg-cosmos-surface/55 px-3 py-2"
+                    className={`rounded-2xl px-3 py-2 ${
+                    isDay ? "bg-cosmos-surface/40" : "bg-cosmos-surface/55"
+                  }`}
                   >
                     <p className="truncate text-xs text-cosmos-text">
                       {event.title}
@@ -1390,7 +1396,7 @@ export function Timeline({
                   </div>
                 ))
               ) : (
-                <p className="rounded-2xl bg-cosmos-surface/55 px-3 py-2 text-xs text-cosmos-text-dim">
+                <p className={`rounded-2xl px-3 py-2 text-xs text-cosmos-text-dim ${isDay ? "bg-cosmos-surface/40" : "bg-cosmos-surface/55"}`}>
                   当前星球暂无事件
                 </p>
               )}

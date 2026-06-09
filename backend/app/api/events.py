@@ -59,7 +59,6 @@ def list_events(
         if category:
             query = query.filter(Event.category == category)
         if tag:
-            # Match tag with comma-boundary awareness: ",tag," or starts/ends with tag
             query = query.filter(
                 (Event.tags == tag)
                 | Event.tags.startswith(tag + ",")

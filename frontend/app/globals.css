@@ -23,19 +23,19 @@
 
 html[data-theme="day"] {
   color-scheme: light;
-  --cosmos-bg: 238 236 230;
-  --cosmos-surface: 249 247 242;
-  --cosmos-card: 255 254 250;
-  --cosmos-border: 185 177 164;
-  --cosmos-gold: 154 111 53;
-  --cosmos-gold-dim: 111 83 45;
-  --cosmos-blue: 76 118 188;
-  --cosmos-blue-dim: 58 93 154;
-  --cosmos-purple: 128 118 178;
-  --cosmos-purple-dim: 102 93 148;
-  --cosmos-text: 38 34 29;
-  --cosmos-text-dim: 82 75 65;
-  --cosmos-accent: 142 96 45;
+  --cosmos-bg: 245 243 240;
+  --cosmos-surface: 252 250 248;
+  --cosmos-card: 255 255 254;
+  --cosmos-border: 196 190 182;
+  --cosmos-gold: 158 128 72;
+  --cosmos-gold-dim: 118 98 58;
+  --cosmos-blue: 72 112 182;
+  --cosmos-blue-dim: 56 88 148;
+  --cosmos-purple: 118 108 168;
+  --cosmos-purple-dim: 96 88 142;
+  --cosmos-text: 32 28 24;
+  --cosmos-text-dim: 92 86 78;
+  --cosmos-accent: 148 116 52;
 }
 
 * {
@@ -61,9 +61,9 @@ body {
 
 html[data-theme="day"] body {
   background:
-    radial-gradient(circle at 20% 12%, rgb(var(--cosmos-blue) / 0.06), transparent 28%),
-    radial-gradient(circle at 80% 16%, rgb(var(--cosmos-gold) / 0.035), transparent 26%),
-    linear-gradient(180deg, rgb(249 247 242) 0%, rgb(242 240 235) 52%, rgb(232 229 222) 100%);
+    radial-gradient(circle at 20% 12%, rgb(var(--cosmos-blue) / 0.04), transparent 26%),
+    radial-gradient(circle at 80% 16%, rgb(var(--cosmos-gold) / 0.03), transparent 24%),
+    linear-gradient(180deg, rgb(252 250 248) 0%, rgb(247 245 243) 52%, rgb(240 238 235) 100%);
 }
 
 button,
@@ -119,8 +119,8 @@ html[data-theme="day"] ::-webkit-scrollbar-thumb {
     background: radial-gradient(
       circle at 50% 42%,
       transparent 0%,
-      rgb(238 236 230 / 0.04) 46%,
-      rgb(196 188 174 / 0.2) 100%
+      rgb(245 243 240 / 0.04) 46%,
+      rgb(210 205 198 / 0.18) 100%
     );
   }
 
@@ -134,10 +134,10 @@ html[data-theme="day"] ::-webkit-scrollbar-thumb {
   }
 
   html[data-theme="day"] .chronos-grid-overlay {
-    opacity: 0.16;
+    opacity: 0.12;
     background-image:
-      linear-gradient(rgb(92 83 70 / 0.08) 1px, transparent 1px),
-      linear-gradient(90deg, rgb(var(--cosmos-blue) / 0.09) 1px, transparent 1px);
+      linear-gradient(rgb(108 100 88 / 0.07) 1px, transparent 1px),
+      linear-gradient(90deg, rgb(var(--cosmos-blue) / 0.07) 1px, transparent 1px);
   }
 
   .theme-shell,
@@ -158,15 +158,15 @@ html[data-theme="day"] ::-webkit-scrollbar-thumb {
 
   html[data-theme="day"] .theme-shell,
   html[data-theme="day"] .theme-shell-strong {
-    border-color: rgb(130 112 82 / 0.12);
+    border-color: rgb(152 142 128 / 0.12);
     background:
-      linear-gradient(145deg, rgb(255 255 252 / 0.94), rgb(246 243 236 / 0.86)),
-      radial-gradient(circle at 14% 10%, rgb(var(--cosmos-blue) / 0.08), transparent 30%),
-      radial-gradient(circle at 88% 16%, rgb(var(--cosmos-gold) / 0.06), transparent 34%);
+      linear-gradient(145deg, rgb(255 255 254 / 0.96), rgb(250 248 246 / 0.88)),
+      radial-gradient(circle at 14% 10%, rgb(var(--cosmos-blue) / 0.06), transparent 30%),
+      radial-gradient(circle at 88% 16%, rgb(var(--cosmos-gold) / 0.04), transparent 34%);
     box-shadow:
-      0 24px 88px rgb(94 76 41 / 0.1),
-      inset 0 1px 0 rgb(255 255 255 / 0.84),
-      inset 0 -1px 0 rgb(120 98 55 / 0.04);
+      0 24px 88px rgb(72 64 52 / 0.08),
+      inset 0 1px 0 rgb(255 255 255 / 0.88),
+      inset 0 -1px 0 rgb(128 118 100 / 0.04);
   }
 
   .theme-shell-strong {
@@ -179,9 +179,9 @@ html[data-theme="day"] ::-webkit-scrollbar-thumb {
 
   html[data-theme="day"] .theme-shell-strong {
     box-shadow:
-      0 32px 110px rgb(94 76 41 / 0.16),
-      inset 0 1px 0 rgb(255 255 255 / 0.84),
-      inset 0 -1px 0 rgb(120 98 55 / 0.05);
+      0 32px 110px rgb(72 64 52 / 0.12),
+      inset 0 1px 0 rgb(255 255 255 / 0.88),
+      inset 0 -1px 0 rgb(128 118 100 / 0.05);
   }
 
   .theme-chip {
@@ -192,9 +192,9 @@ html[data-theme="day"] ::-webkit-scrollbar-thumb {
   }
 
   html[data-theme="day"] .theme-chip {
-    border-color: rgb(130 112 82 / 0.1);
-    background: rgb(255 255 255 / 0.68);
-    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.82);
+    border-color: rgb(152 142 128 / 0.1);
+    background: rgb(255 255 255 / 0.72);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.86);
   }
 
   .glass-card {
@@ -247,22 +247,22 @@ html[data-theme="day"] ::-webkit-scrollbar-thumb {
   }
 
   html[data-theme="day"] .chronos-panel {
-    border-color: rgb(130 112 82 / 0.12);
+    border-color: rgb(152 142 128 / 0.12);
     background:
-      linear-gradient(145deg, rgb(255 255 252 / 0.96), rgb(247 244 238 / 0.9)),
-      radial-gradient(circle at 14% 8%, rgb(var(--cosmos-blue) / 0.08), transparent 30%),
-      radial-gradient(circle at 88% 18%, rgb(var(--cosmos-gold) / 0.06), transparent 34%);
+      linear-gradient(145deg, rgb(255 255 254 / 0.97), rgb(250 248 245 / 0.92)),
+      radial-gradient(circle at 14% 8%, rgb(var(--cosmos-blue) / 0.06), transparent 30%),
+      radial-gradient(circle at 88% 18%, rgb(var(--cosmos-gold) / 0.04), transparent 34%);
     box-shadow:
-      0 26px 88px rgb(94 76 41 / 0.1),
-      inset 0 1px 0 rgb(255 255 255 / 0.8),
-      inset 0 -1px 0 rgb(120 98 55 / 0.04);
+      0 26px 88px rgb(72 64 52 / 0.08),
+      inset 0 1px 0 rgb(255 255 255 / 0.82),
+      inset 0 -1px 0 rgb(128 118 100 / 0.04);
   }
 
   html[data-theme="day"] .chronos-panel::before {
     background:
-      linear-gradient(90deg, transparent, rgb(120 98 55 / 0.05), transparent),
-      repeating-linear-gradient(135deg, rgb(120 98 55 / 0.03) 0 1px, transparent 1px 18px);
-    opacity: 0.28;
+      linear-gradient(90deg, transparent, rgb(128 118 100 / 0.04), transparent),
+      repeating-linear-gradient(135deg, rgb(128 118 100 / 0.025) 0 1px, transparent 1px 18px);
+    opacity: 0.22;
   }
 
   .chronos-panel-strong {
@@ -278,13 +278,13 @@ html[data-theme="day"] ::-webkit-scrollbar-thumb {
 
   html[data-theme="day"] .chronos-panel-strong {
     background:
-      linear-gradient(150deg, rgb(255 255 252 / 0.96), rgb(244 240 232 / 0.92)),
-      radial-gradient(circle at 26% 0%, rgb(var(--cosmos-gold) / 0.08), transparent 34%);
+      linear-gradient(150deg, rgb(255 255 254 / 0.97), rgb(248 246 242 / 0.93)),
+      radial-gradient(circle at 26% 0%, rgb(var(--cosmos-gold) / 0.06), transparent 34%);
     border-color: rgb(var(--cosmos-gold) / 0.14);
     box-shadow:
-      0 32px 110px rgb(94 76 41 / 0.12),
-      0 0 70px rgb(var(--cosmos-blue) / 0.07),
-      inset 0 1px 0 rgb(255 255 255 / 0.84);
+      0 32px 110px rgb(72 64 52 / 0.1),
+      0 0 70px rgb(var(--cosmos-blue) / 0.05),
+      inset 0 1px 0 rgb(255 255 255 / 0.86);
   }
 
   .chronos-eyebrow {
@@ -296,7 +296,7 @@ html[data-theme="day"] ::-webkit-scrollbar-thumb {
   }
 
   html[data-theme="day"] .chronos-eyebrow {
-    color: rgb(148 114 43 / 0.82);
+    color: rgb(148 128 62 / 0.82);
   }
 
   .chronos-divider {
@@ -316,9 +316,9 @@ html[data-theme="day"] ::-webkit-scrollbar-thumb {
   }
 
   html[data-theme="day"] .chronos-metric {
-    background: linear-gradient(145deg, rgb(255 255 255 / 0.7), rgb(246 242 234 / 0.74));
-    border-color: rgb(130 112 82 / 0.09);
-    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.82);
+    background: linear-gradient(145deg, rgb(255 255 255 / 0.72), rgb(250 248 244 / 0.76));
+    border-color: rgb(152 142 128 / 0.09);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.84);
   }
 
   .aurora-text {
