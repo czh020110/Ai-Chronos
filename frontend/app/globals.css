@@ -444,3 +444,10 @@ html[data-theme="day"] ::-webkit-scrollbar-thumb {
     border-color: rgb(244 158 11 / 0.26);
   }
 }
+
+@media (max-width: 640px) {
+  html,
+  body {
+    -webkit-overflow-scrolling: auto;
+  }
+}

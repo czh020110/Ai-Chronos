@@ -503,11 +503,15 @@ function ListView({
   buckets,
   onNodeClick,
   highlightedId,
+  theme,
 }: {
   buckets: RenderNode[];
   onNodeClick: (bucket: TimelineBucket) => void;
   highlightedId: string | null;
+  theme: ThemeMode;
 }) {
+  const isDay = theme === "day";
+
   return (
     <div className="absolute inset-x-0 bottom-0 top-24 z-20 overflow-y-auto px-5 pb-28 2xl:right-[355px]">
       <div className="mx-auto max-w-4xl space-y-3">
@@ -525,7 +529,9 @@ function ListView({
               className={`group grid w-full grid-cols-[88px_1fr_auto] items-center gap-5 rounded-2xl border px-5 py-4 text-left backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 hover:border-cosmos-gold/25 ${
                 isHighlighted
                   ? "border-cosmos-gold/45 bg-cosmos-gold/10 shadow-[0_0_34px_rgba(212,168,83,0.18)]"
-                  : "border-cosmos-border/30 bg-white/[0.035]"
+                  : isDay
+                    ? "border-cosmos-border/30 bg-white/70"
+                    : "border-cosmos-border/30 bg-white/[0.035]"
               }`}
             >
               <div className="font-mono text-right">
@@ -541,20 +547,20 @@ function ListView({
                   {bucket.subLabel ?? bucket.label}
                 </h3>
                 <div className="mt-2 flex flex-wrap gap-1.5">
-                  <span className="rounded-full bg-white/[0.05] px-2 py-0.5 text-[9px] text-cosmos-text-dim">
+                  <span className={`rounded-full px-2 py-0.5 text-[9px] text-cosmos-text-dim ${isDay ? "bg-cosmos-surface/45" : "bg-white/[0.05]"}`}>
                     {bucket.eventCount} 个事件
                   </span>
                   {topEvent?.tags.slice(0, 2).map((tag) => (
                     <span
                       key={tag}
-                      className="rounded-full bg-white/[0.05] px-2 py-0.5 text-[9px] text-cosmos-text-dim"
+                      className={`rounded-full px-2 py-0.5 text-[9px] text-cosmos-text-dim ${isDay ? "bg-cosmos-surface/45" : "bg-white/[0.05]"}`}
                     >
                       {tag}
                     </span>
                   ))}
                 </div>
               </div>
-              <span className="rounded-full border border-white/10 bg-cosmos-surface/55 px-2.5 py-1 font-mono text-[10px] text-cosmos-text-dim">
+              <span className={`rounded-full border px-2.5 py-1 font-mono text-[10px] text-cosmos-text-dim ${isDay ? "border-cosmos-border/20 bg-cosmos-surface/45" : "border-white/10 bg-cosmos-surface/55"}`}>
                 {bucket.maxImpact}
               </span>
             </motion.button>
@@ -589,6 +595,13 @@ export function Timeline({
   const isDragging = useRef(false);
   const lastX = useRef(0);
   const dragDelta = useRef(0);
+  const touchStartX = useRef(0);
+  const touchStartY = useRef(0);
+  const touchStartTime = useRef(0);
+  const touchLastX = useRef(0);
+  const touchLastTime = useRef(0);
+  const touchLastDelta = useRef(0);
+  const wasTouchDrag = useRef(false);
   const animRef = useRef<number | null>(null);
   const targetScrollX = useRef(0);
   const currentScrollX = useRef(0);
@@ -940,7 +953,7 @@ export function Timeline({
       if (now < wheelLockedUntil.current) return;
       const dir = event.deltaY > 0 ? 1 : -1;
       stepFocus(dir);
-      wheelLockedUntil.current = now + 0;
+      wheelLockedUntil.current = now + 100;
     },
     [stepFocus],
   );
@@ -969,8 +982,71 @@ export function Timeline({
     dragDelta.current = 0;
   }, []);
 
+  const handleTouchStart = useCallback((event: React.TouchEvent) => {
+    const touch = event.touches[0];
+    touchStartX.current = touch.clientX;
+    touchStartY.current = touch.clientY;
+    touchStartTime.current = Date.now();
+    touchLastX.current = touch.clientX;
+    touchLastTime.current = Date.now();
+    lastX.current = touch.clientX;
+    dragDelta.current = 0;
+    isDragging.current = true;
+    wasTouchDrag.current = false;
+  }, []);
+
+  const handleTouchMove = useCallback(
+    (event: React.TouchEvent) => {
+      if (!isDragging.current) return;
+      const touch = event.touches[0];
+      const dx = touchStartX.current - touch.clientX;
+      const dy = touchStartY.current - touch.clientY;
+
+      // 水平拖拽超过垂直位移才视为时间线拖拽
+      if (Math.abs(dx) > 18 && Math.abs(dx) > Math.abs(dy)) {
+        event.preventDefault();
+        wasTouchDrag.current = true;
+      }
+
+      const delta = lastX.current - touch.clientX;
+      lastX.current = touch.clientX;
+      dragDelta.current += delta;
+      touchLastDelta.current = delta;
+
+      touchLastX.current = touch.clientX;
+      touchLastTime.current = Date.now();
+
+      if (Math.abs(dragDelta.current) < 62) return;
+      stepFocus(dragDelta.current > 0 ? 1 : -1);
+      dragDelta.current = 0;
+    },
+    [stepFocus],
+  );
+
+  const handleTouchEnd = useCallback(() => {
+    // 惯性滚动：根据最后一段滑动速度额外触发 stepFocus
+    if (wasTouchDrag.current) {
+      const dt = Date.now() - touchLastTime.current;
+      if (dt < 150) {
+        const velocity = Math.abs(touchLastDelta.current) / Math.max(dt, 1);
+        if (velocity > 0.5) {
+          stepFocus(touchLastDelta.current > 0 ? 1 : -1);
+        }
+      }
+    }
+
+    isDragging.current = false;
+    dragDelta.current = 0;
+    touchLastDelta.current = 0;
+  }, [stepFocus]);
+
   const openNode = useCallback(
     (node: RenderNode) => {
+      // 触摸拖拽结束后短时间内的点击视为误触，跳过
+      if (wasTouchDrag.current) {
+        wasTouchDrag.current = false;
+        return;
+      }
       selectNode(node);
       if (node.eventCount === 0) return;
       onNodeClick(focusFromNode(node));
@@ -1020,6 +1096,7 @@ export function Timeline({
         buckets={activeNodes}
         onNodeClick={onNodeClick}
         highlightedId={highlightedId}
+        theme={theme}
       />
     );
   }
@@ -1027,11 +1104,16 @@ export function Timeline({
   return (
     <div
       className="absolute inset-0 z-10 cursor-grab select-none active:cursor-grabbing"
+      style={{ touchAction: 'none' }}
       onWheel={handleWheel}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      onTouchCancel={handleTouchEnd}
     >
       <TimelineCanvas
         scrollX={scrollX}
@@ -1046,9 +1128,9 @@ export function Timeline({
         initial={{ opacity: 0, y: -16, filter: "blur(10px)" }}
         animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
         transition={{ duration: 0.45, ease: "easeOut" }}
-        className="pointer-events-auto absolute left-5 right-5 top-[96px] z-40 md:left-6 md:right-[330px] 2xl:right-[360px]"
+        className="pointer-events-auto absolute left-3 right-3 top-[80px] z-40 md:left-6 md:right-[330px] 2xl:right-[360px]"
       >
-        <div className={`flex flex-col gap-3 rounded-[28px] border p-3 backdrop-blur-2xl lg:flex-row lg:items-center lg:justify-between lg:p-4 ${
+        <div className={`flex flex-col gap-2 rounded-[24px] border p-2 backdrop-blur-2xl sm:gap-3 sm:rounded-[28px] sm:p-3 lg:flex-row lg:items-center lg:justify-between lg:p-4 ${
           isDay
             ? "border-cosmos-border/45 bg-cosmos-card/92 shadow-[0_14px_42px_rgba(72,64,52,0.07)]"
             : "border-cosmos-border/35 bg-cosmos-surface/72 shadow-[0_0_42px_rgba(255,255,255,0.08)]"
@@ -1060,12 +1142,12 @@ export function Timeline({
               </span>
               <span className="hidden h-px w-16 bg-gradient-to-r from-cosmos-gold/50 to-transparent md:block" />
             </div>
-            <h2 className={`mt-2 font-display text-2xl font-semibold leading-tight tracking-[-0.03em] md:text-3xl ${
+            <h2 className={`mt-1 font-display text-lg font-semibold leading-tight tracking-[-0.03em] sm:mt-2 sm:text-2xl md:text-3xl ${
               isDay ? "text-cosmos-text" : "aurora-text"
             }`}>
               {meta.title}
             </h2>
-            <p className="mt-1 max-w-2xl font-display text-xs leading-5 tracking-wide text-cosmos-text-dim md:text-sm md:leading-6">
+            <p className="mt-1 hidden max-w-2xl font-display text-xs leading-5 tracking-wide text-cosmos-text-dim sm:block md:text-sm md:leading-6">
               {meta.subtitle}
             </p>
           </div>
@@ -1083,7 +1165,7 @@ export function Timeline({
                   type="button"
                   onClick={() => onTimelineScaleChange(option.key)}
                   aria-pressed={active}
-                  className={`group relative overflow-hidden rounded-[18px] px-3 py-3 text-center transition-all duration-300 md:min-w-[118px] ${
+                  className={`group relative overflow-hidden rounded-[14px] px-2 py-2 text-center transition-all duration-300 sm:rounded-[18px] sm:px-3 sm:py-3 md:min-w-[118px] ${
                     active
                       ? "bg-cosmos-gold/16 text-cosmos-gold shadow-[0_0_32px_rgba(212,168,83,0.18)]"
                       : "text-cosmos-text-dim hover:bg-cosmos-surface/60 hover:text-cosmos-text"
