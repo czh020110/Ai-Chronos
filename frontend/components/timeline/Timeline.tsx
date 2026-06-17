@@ -581,14 +581,15 @@ export function Timeline({
   highlightedId,
   theme,
 }: TimelineProps) {
-  const [scrollX, setScrollX] = useState(0);
+  const [animState, setAnimState] = useState({ scrollX: 0, globalRotation: 0, scaleBlend: SCALE_INDEX[timelineScale] });
+  const scrollX = animState.scrollX;
+  const globalRotation = animState.globalRotation;
+  const scaleBlend = animState.scaleBlend;
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [hoveredNode, setHoveredNode] = useState<RenderNode | null>(null);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
   const [winW, setWinW] = useState(1200);
   const [winH, setWinH] = useState(800);
-  const [globalRotation, setGlobalRotation] = useState(0);
-  const [scaleBlend, setScaleBlend] = useState(SCALE_INDEX[timelineScale]);
   const isDay = theme === "day";
   const lastFocusKey = useRef<string | null>(null);
   const selectionAnchorRef = useRef<SelectionAnchor | null>(null);
@@ -774,9 +775,11 @@ export function Timeline({
         currentScrollX.current = targetScrollX.current;
         currentRotation.current = targetRotation.current;
         currentScaleBlend.current = targetScaleBlend.current;
-        setScrollX(targetScrollX.current);
-        setGlobalRotation(targetRotation.current);
-        setScaleBlend(targetScaleBlend.current);
+        setAnimState({
+          scrollX: targetScrollX.current,
+          globalRotation: targetRotation.current,
+          scaleBlend: targetScaleBlend.current,
+        });
         animRef.current = null;
         return;
       }
@@ -785,9 +788,11 @@ export function Timeline({
       currentRotation.current += rotDiff * 0.2;
       currentScaleBlend.current += blendDiff * 0.18;
 
-      setScrollX(currentScrollX.current);
-      setGlobalRotation(currentRotation.current);
-      setScaleBlend(currentScaleBlend.current);
+      setAnimState({
+        scrollX: currentScrollX.current,
+        globalRotation: currentRotation.current,
+        scaleBlend: currentScaleBlend.current,
+      });
       animRef.current = requestAnimationFrame(animate);
     };
 
@@ -897,7 +902,7 @@ export function Timeline({
   useEffect(() => {
     targetScrollX.current = Math.max(0, Math.min(targetScrollX.current, maxScroll));
     currentScrollX.current = Math.max(0, Math.min(currentScrollX.current, maxScroll));
-    setScrollX((value) => Math.max(0, Math.min(value, maxScroll)));
+    setAnimState((prev) => ({ ...prev, scrollX: Math.max(0, Math.min(prev.scrollX, maxScroll)) }));
   }, [maxScroll]);
 
   const onFocusChangeRef = useRef(onFocusChange);
@@ -1250,11 +1255,8 @@ export function Timeline({
             (node.unit === "year" || reveal > 0.55);
 
           return (
-            <motion.div
+            <div
               key={node.key}
-              initial={false}
-              animate={{ opacity: idleOpacity }}
-              transition={{ duration: 0.24, ease: "easeOut" }}
               className="absolute"
               style={{
                 left: nodeX,
@@ -1262,10 +1264,8 @@ export function Timeline({
                 pointerEvents: interactive ? "auto" : "none",
                 zIndex: Math.round(20 + depth * 60 + (isFocused ? 90 : 0)),
                 transform: `translate(-50%, -50%) translateZ(${renderZ * 130}px) scale(${scale})`,
-                filter: `blur(${Math.max(
-                  0,
-                  (isDay ? (1 - depth) * 0.25 : (1 - depth) * 0.8) - (isFocused ? 1 : 0),
-                )}px)`,
+                opacity: idleOpacity,
+                transition: 'opacity 0.24s ease-out',
               }}
             >
               {hasEvents && (isFocused || isStrong) && (
@@ -1430,7 +1430,7 @@ export function Timeline({
                   </span>
                 )}
               </div>
-            </motion.div>
+            </div>
           );
         })}
       </div>

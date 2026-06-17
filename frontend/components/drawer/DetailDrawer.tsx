@@ -55,7 +55,7 @@ export function DetailDrawer({ bucket, isOpen, onClose }: DetailDrawerProps) {
             initial={{ x: "104%", opacity: 0.7, filter: "blur(12px)" }}
             animate={{ x: 0, opacity: 1, filter: "blur(0px)" }}
             exit={{ x: "104%", opacity: 0.65, filter: "blur(12px)" }}
-            transition={{ type: "spring", damping: 32, stiffness: 270 }}
+            transition={{ type: "spring", damping: 36, stiffness: 220 }}
             className="theme-shell-strong fixed bottom-3 right-3 top-3 z-50 flex w-[calc(100vw-24px)] max-w-[600px] flex-col overflow-hidden rounded-[32px] md:right-5 md:top-5 md:bottom-5"
           >
             <div className="pointer-events-none absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-cosmos-gold/50 to-transparent" />

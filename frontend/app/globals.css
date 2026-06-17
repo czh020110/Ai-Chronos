@@ -144,7 +144,7 @@ html[data-theme="day"] ::-webkit-scrollbar-thumb {
   .theme-shell-strong {
     position: relative;
     overflow: hidden;
-    backdrop-filter: blur(24px) saturate(145%);
+    backdrop-filter: blur(18px) saturate(140%);
     border: 1px solid rgb(255 255 255 / 0.08);
     background:
       linear-gradient(145deg, rgb(15 18 35 / 0.78), rgb(5 7 17 / 0.72)),
