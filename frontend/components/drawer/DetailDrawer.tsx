@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { TimelineBucket } from "@/lib/types";
 import { format, parseISO } from "date-fns";
@@ -16,11 +16,19 @@ interface DetailDrawerProps {
 
 export function DetailDrawer({ bucket, isOpen, onClose }: DetailDrawerProps) {
   const contentRef = useRef<HTMLDivElement>(null);
+  const [isMobile, setIsMobile] = useState(false);
   const events = useMemo(() => bucket?.events ?? [], [bucket]);
   const uniqueTags = useMemo(
     () => Array.from(new Set(events.flatMap((event) => event.tags))),
     [events],
   );
+
+  useEffect(() => {
+    setIsMobile(window.innerWidth < 768);
+    const onResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
 
   useEffect(() => {
     if (contentRef.current) {
@@ -52,17 +60,19 @@ export function DetailDrawer({ bucket, isOpen, onClose }: DetailDrawerProps) {
           />
 
           <motion.aside
-            initial={{ x: "104%", opacity: 0.7, filter: "blur(12px)" }}
-            animate={{ x: 0, opacity: 1, filter: "blur(0px)" }}
-            exit={{ x: "104%", opacity: 0.65, filter: "blur(12px)" }}
+            initial={isMobile ? { y: "100%", opacity: 0.7 } : { x: "104%", opacity: 0.7, filter: "blur(12px)" }}
+            animate={isMobile ? { y: 0, opacity: 1 } : { x: 0, opacity: 1, filter: "blur(0px)" }}
+            exit={isMobile ? { y: "100%", opacity: 0.65 } : { x: "104%", opacity: 0.65, filter: "blur(12px)" }}
             transition={{ type: "spring", damping: 36, stiffness: 220 }}
-            className="theme-shell-strong fixed bottom-3 right-3 top-3 z-50 flex w-[calc(100vw-24px)] max-w-[600px] flex-col overflow-hidden rounded-[32px] md:right-5 md:top-5 md:bottom-5"
+            className="theme-shell-strong fixed z-50 flex flex-col overflow-hidden
+              bottom-0 left-0 right-0 h-[85dvh] rounded-t-[28px]
+              md:bottom-5 md:right-5 md:top-5 md:left-auto md:h-auto md:w-[calc(100vw-24px)] md:max-w-[600px] md:rounded-[32px]"
           >
             <div className="pointer-events-none absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-cosmos-gold/50 to-transparent" />
             <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-cosmos-gold/10 blur-3xl" />
             <div className="pointer-events-none absolute -bottom-24 -left-24 h-72 w-72 rounded-full bg-cosmos-blue/10 blur-3xl" />
 
-            <div className="relative z-10 flex-shrink-0 px-6 pt-6 pb-5 md:px-7 md:pt-7">
+            <div className="relative z-10 flex-shrink-0 px-4 pt-4 pb-5 md:px-7 md:pt-7">
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0 flex-1">
                   <div className="mb-4 flex flex-wrap items-center gap-2">
@@ -76,7 +86,7 @@ export function DetailDrawer({ bucket, isOpen, onClose }: DetailDrawerProps) {
                       </span>
                     )}
                   </div>
-                  <h2 className="font-display text-3xl leading-[1.05] tracking-[-0.04em] text-cosmos-text md:text-4xl">
+                  <h2 className="font-display text-2xl leading-[1.05] tracking-[-0.04em] text-cosmos-text md:text-3xl md:leading-[1.05] lg:text-4xl">
                     {drawerTitle}
                   </h2>
                   {bucket.subLabel && bucket.eventCount > 1 && (
@@ -120,8 +130,8 @@ export function DetailDrawer({ bucket, isOpen, onClose }: DetailDrawerProps) {
               </div>
             </div>
 
-            <div ref={contentRef} className="relative z-10 flex-1 overflow-y-auto px-6 py-2 md:px-7">
-              <div className="space-y-5 pb-6">
+            <div ref={contentRef} className="relative z-10 flex-1 overflow-y-auto px-4 py-2 md:px-7">
+              <div className="space-y-5 pb-[calc(1.5rem+var(--sab))]">
                 {events.map((event, index) => (
                   <article key={event.id} className="rounded-3xl border border-cosmos-border/25 bg-cosmos-surface/50 p-5">
                     <div className="flex flex-wrap items-start justify-between gap-3">

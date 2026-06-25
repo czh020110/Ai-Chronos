@@ -20,7 +20,7 @@ export function ZoomControls({ zoomLevel, onZoomChange }: ZoomControlsProps) {
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.5, delay: 0.4 }}
-      className="fixed right-6 bottom-32 z-40 flex flex-col items-center gap-1"
+      className="fixed right-4 bottom-24 z-40 flex flex-col items-center gap-1 sm:right-6 sm:bottom-32"
     >
       <div className="glass-card p-1.5 flex flex-col gap-1">
         <button

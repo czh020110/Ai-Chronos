@@ -75,12 +75,13 @@ export function SearchPanel({ events, isOpen, onClose, onSelect }: SearchPanelPr
             animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
             exit={{ opacity: 0, y: -24, scale: 0.96, filter: "blur(12px)" }}
             transition={{ duration: 0.24, ease: "easeOut" }}
-            className="fixed left-1/2 top-24 z-50 w-full max-w-2xl -translate-x-1/2 px-4"
+            className="fixed inset-x-2 top-[var(--sat)] z-50 h-[calc(100dvh-16px)] px-0
+              sm:left-1/2 sm:top-24 sm:h-auto sm:max-h-[calc(100dvh-120px)] sm:w-full sm:max-w-2xl sm:-translate-x-1/2 sm:px-4"
           >
-            <div className="theme-shell-strong relative overflow-hidden rounded-[32px]">
+            <div className="theme-shell-strong relative flex h-full flex-col overflow-hidden rounded-[28px] sm:rounded-[32px]">
               <div className="pointer-events-none absolute -left-24 -top-24 h-56 w-56 rounded-full bg-cosmos-blue/14 blur-3xl" />
               <div className="pointer-events-none absolute -right-20 top-10 h-48 w-48 rounded-full bg-cosmos-gold/12 blur-3xl" />
-              <div className="relative z-10 flex items-center gap-4 border-b border-cosmos-border/30 px-5 py-5 md:px-6">
+              <div className="relative z-10 shrink-0 flex items-center gap-4 border-b border-cosmos-border/30 px-5 py-5 md:px-6">
                 <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-cosmos-gold/20 bg-cosmos-gold/10 text-cosmos-gold">
                   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                     <circle cx="11" cy="11" r="8" />
@@ -106,9 +107,9 @@ export function SearchPanel({ events, isOpen, onClose, onSelect }: SearchPanelPr
                 </kbd>
               </div>
 
-              <div className="relative z-10">
+              <div className="relative z-10 flex-1 overflow-y-auto">
                 {query.length > 0 ? (
-                  <div className="max-h-[440px] overflow-y-auto p-3">
+                  <div className="p-3">
                     {filtered.length === 0 ? (
                       <div className="px-5 py-14 text-center">
                         <p className="font-display text-xl text-cosmos-text">没有找到匹配事件</p>

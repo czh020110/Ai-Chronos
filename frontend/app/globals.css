@@ -19,6 +19,10 @@
   --cosmos-text: 236 234 247;
   --cosmos-text-dim: 133 137 169;
   --cosmos-accent: 240 192 96;
+  --sat: env(safe-area-inset-top, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
 }
 
 html[data-theme="day"] {

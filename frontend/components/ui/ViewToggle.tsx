@@ -53,7 +53,7 @@ export function ViewToggle({ viewMode, onViewChange }: ViewToggleProps) {
       initial={{ opacity: 0, x: 20, scale: 0.96 }}
       animate={{ opacity: 1, x: 0, scale: 1 }}
       transition={{ duration: 0.5, delay: 0.35 }}
-      className="fixed bottom-7 right-5 z-40 md:right-7"
+      className="fixed bottom-[calc(1.75rem+var(--sab))] right-5 z-40 md:right-7"
     >
       <div className="theme-shell flex items-center gap-1 rounded-[24px] p-1.5 md:flex-col">
         {modes.map(({ key, label, shortLabel, icon }) => (

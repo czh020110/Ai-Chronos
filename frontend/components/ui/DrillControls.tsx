@@ -28,7 +28,7 @@ export function DrillControls({ drill, onDrillUp, onLevelChange }: DrillControls
       initial={{ opacity: 0, y: 22, scale: 0.96 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.55, delay: 0.45, ease: "easeOut" }}
-      className="fixed bottom-6 left-1/2 z-40 w-[calc(100vw-32px)] max-w-[720px] -translate-x-1/2"
+      className="fixed bottom-[calc(1.5rem+var(--sab))] left-1/2 z-40 w-[calc(100vw-32px)] max-w-[720px] -translate-x-1/2"
     >
       <div className="relative overflow-hidden rounded-[28px] border border-white/[0.08] bg-[#060814]/72 px-3 py-3 shadow-[0_22px_80px_rgba(0,0,0,0.46)] backdrop-blur-2xl md:px-4">
         <div className="absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-cosmos-gold/45 to-transparent" />

@@ -129,7 +129,7 @@ export default function Home() {
   }, []);
 
   return (
-    <main className="chronos-stage relative h-screen w-full overflow-hidden">
+    <main className="chronos-stage relative h-dvh w-full overflow-hidden">
       <StarField theme={theme} />
       <div className="chronos-vignette pointer-events-none fixed inset-0 z-[1]" />
       <div className="chronos-grid-overlay pointer-events-none fixed inset-0 z-[1]" />

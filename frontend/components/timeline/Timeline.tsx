@@ -251,6 +251,7 @@ function TimelineCanvas({
   winW,
   winH,
   theme,
+  mobileScale,
 }: {
   scrollX: number;
   globalRotation: number;
@@ -258,6 +259,7 @@ function TimelineCanvas({
   winW: number;
   winH: number;
   theme: ThemeMode;
+  mobileScale: number;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -274,7 +276,7 @@ function TimelineCanvas({
 
     const width = canvas.offsetWidth;
     const height = canvas.offsetHeight;
-    const axisY = Math.max(350, height * 0.6);
+    const axisY = Math.max(Math.min(280, height * 0.45), height * 0.5);
     const isDay = theme === "day";
 
     ctx.clearRect(0, 0, width, height);
@@ -301,7 +303,7 @@ function TimelineCanvas({
 
     const tracks = [
       {
-        radius: ORBIT_RADIUS.year,
+        radius: ORBIT_RADIUS.year * mobileScale,
         opacity: 1,
         step: ANGLE_STEP.year / Math.max(layout.yearGap, 1),
         rgb: isDay ? "158,132,78" : "240,192,96",
@@ -313,7 +315,7 @@ function TimelineCanvas({
         backWidth: isDay ? 0.78 : 0.9,
       },
       {
-        radius: ORBIT_RADIUS.month,
+        radius: ORBIT_RADIUS.month * mobileScale,
         opacity: layout.monthReveal,
         step: ANGLE_STEP.month / Math.max(layout.monthGap, 1),
         rgb: isDay ? "78,112,178" : "91,141,239",
@@ -325,7 +327,7 @@ function TimelineCanvas({
         backWidth: isDay ? 0.72 : 0.8,
       },
       {
-        radius: ORBIT_RADIUS.day,
+        radius: ORBIT_RADIUS.day * mobileScale,
         opacity: layout.dayReveal,
         step:
           ANGLE_STEP.day /
@@ -397,7 +399,7 @@ function TimelineCanvas({
     ctx.fillStyle = centerGlow;
     ctx.fillRect(width / 2 - 220, axisY - 220, 440, 440);
     ctx.restore();
-  }, [scrollX, globalRotation, layout, winW, winH, theme]);
+  }, [scrollX, globalRotation, layout, winW, winH, theme, mobileScale]);
 
   return (
     <canvas
@@ -421,7 +423,7 @@ function GridView({
   const isDay = theme === "day";
 
   return (
-    <div className="absolute inset-x-0 bottom-0 top-24 z-20 overflow-y-auto px-5 pb-28 2xl:right-[335px]">
+    <div className="absolute inset-x-0 bottom-0 top-16 z-20 overflow-y-auto px-3 pb-28 sm:top-24 sm:px-5 2xl:right-[335px]">
       <div className="mx-auto grid max-w-6xl grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
         {buckets.map((bucket, index) => {
           const topEvent = bucket.events[0];
@@ -513,7 +515,7 @@ function ListView({
   const isDay = theme === "day";
 
   return (
-    <div className="absolute inset-x-0 bottom-0 top-24 z-20 overflow-y-auto px-5 pb-28 2xl:right-[355px]">
+    <div className="absolute inset-x-0 bottom-0 top-24 z-20 overflow-y-auto px-3 pb-28 sm:px-5 2xl:right-[355px]">
       <div className="mx-auto max-w-4xl space-y-3">
         {buckets.map((bucket, index) => {
           const topEvent = bucket.events[0];
@@ -526,7 +528,7 @@ function ListView({
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: index * 0.018, duration: 0.36 }}
               onClick={() => onNodeClick(bucketFromNode(bucket))}
-              className={`group grid w-full grid-cols-[88px_1fr_auto] items-center gap-5 rounded-2xl border px-5 py-4 text-left backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 hover:border-cosmos-gold/25 ${
+              className={`group flex flex-col sm:grid sm:grid-cols-[88px_1fr_auto] sm:items-center gap-2 sm:gap-5 rounded-2xl border px-3 py-3 sm:px-5 sm:py-4 text-left backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 hover:border-cosmos-gold/25 ${
                 isHighlighted
                   ? "border-cosmos-gold/45 bg-cosmos-gold/10 shadow-[0_0_34px_rgba(212,168,83,0.18)]"
                   : isDay
@@ -534,12 +536,17 @@ function ListView({
                     : "border-cosmos-border/30 bg-white/[0.035]"
               }`}
             >
-              <div className="font-mono text-right">
-                <span className="block text-sm text-cosmos-gold">
-                  {bucket.label}
-                </span>
-                <span className="text-[10px] tracking-[0.16em] text-cosmos-text-dim">
-                  {unitCopy[bucket.unit]}
+              <div className="flex items-center gap-3 sm:contents">
+                <div className="font-mono sm:text-right">
+                  <span className="block text-sm text-cosmos-gold">
+                    {bucket.label}
+                  </span>
+                  <span className="hidden text-[10px] tracking-[0.16em] text-cosmos-text-dim sm:block">
+                    {unitCopy[bucket.unit]}
+                  </span>
+                </div>
+                <span className={`ml-auto rounded-full border px-2.5 py-1 font-mono text-[10px] text-cosmos-text-dim sm:hidden ${isDay ? "border-cosmos-border/20 bg-cosmos-surface/45" : "border-white/10 bg-cosmos-surface/55"}`}>
+                  {bucket.maxImpact}
                 </span>
               </div>
               <div className="min-w-0">
@@ -560,7 +567,7 @@ function ListView({
                   ))}
                 </div>
               </div>
-              <span className={`rounded-full border px-2.5 py-1 font-mono text-[10px] text-cosmos-text-dim ${isDay ? "border-cosmos-border/20 bg-cosmos-surface/45" : "border-white/10 bg-cosmos-surface/55"}`}>
+              <span className={`hidden rounded-full border px-2.5 py-1 font-mono text-[10px] text-cosmos-text-dim sm:block ${isDay ? "border-cosmos-border/20 bg-cosmos-surface/45" : "border-white/10 bg-cosmos-surface/55"}`}>
                 {bucket.maxImpact}
               </span>
             </motion.button>
@@ -633,6 +640,7 @@ export function Timeline({
   }, [events]);
 
   const leftPad = winW / 2;
+  const mobileScale = winH < 700 ? Math.max(0.6, winH / 900) : 1;
   const layoutMetrics = useMemo(() => getLayoutMetrics(scaleBlend), [scaleBlend]);
   const targetLayoutMetrics = useMemo(
     () => getLayoutMetrics(SCALE_INDEX[timelineScale]),
@@ -1062,7 +1070,7 @@ export function Timeline({
   const meta =
     scaleOptions.find((option) => option.key === timelineScale) ??
     scaleOptions[1];
-  const axisY = Math.max(350, winH * 0.6);
+  const axisY = Math.max(Math.min(280, winH * 0.45), winH * 0.5);
 
   const visibleNodes = useMemo(() => {
     return allNodes
@@ -1074,7 +1082,7 @@ export function Timeline({
           node,
           reveal,
           nodeX: worldX - scrollX,
-          renderY: Math.sin(angle) * node.radius,
+          renderY: Math.sin(angle) * node.radius * mobileScale,
           renderZ: Math.cos(angle),
         };
       })
@@ -1082,7 +1090,7 @@ export function Timeline({
         ({ nodeX, reveal }) => reveal > 0.01 && nodeX > -340 && nodeX < winW + 340,
       )
       .sort((a, b) => a.renderZ - b.renderZ);
-  }, [allNodes, globalRotation, layoutMetrics, leftPad, scrollX, winW]);
+  }, [allNodes, globalRotation, layoutMetrics, leftPad, scrollX, winW, mobileScale]);
 
   if (viewMode === "grid") {
     return (
@@ -1127,6 +1135,7 @@ export function Timeline({
         winW={winW}
         winH={winH}
         theme={theme}
+        mobileScale={mobileScale}
       />
 
       <motion.div
@@ -1234,8 +1243,9 @@ export function Timeline({
           const scale =
             (0.66 + depth * 0.5 + (isFocused ? 0.24 : 0)) * visibilityScale;
           const labelOffset = renderY < 0 ? -50 : 38;
+          const labelScale = winW < 500 ? 0.72 : winW < 768 ? 0.85 : 1;
           const labelWidth =
-            node.unit === "year" ? (isDay ? 108 : 150) : node.unit === "month" ? (isDay ? 84 : 112) : (isDay ? 68 : 78);
+            (node.unit === "year" ? (isDay ? 108 : 150) : node.unit === "month" ? (isDay ? 84 : 112) : (isDay ? 68 : 78)) * labelScale;
           const showLabelCard =
             reveal > 0.35 && (isFocused || hasEvents || node.unit === "year");
           const accent =

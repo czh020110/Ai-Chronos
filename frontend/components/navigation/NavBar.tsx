@@ -28,10 +28,10 @@ export function NavBar({ onSearchOpen, onThemeToggle, theme, stats }: NavBarProp
       initial={{ y: -28, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.65, ease: "easeOut" }}
-      className="theme-shell fixed left-4 right-4 top-4 z-50 flex items-center justify-between rounded-[28px] px-4 py-3 md:left-6 md:right-6 md:px-5"
+      className="theme-shell fixed left-[calc(4px+var(--sal))] right-[calc(4px+var(--sar))] top-[calc(4px+var(--sat))] z-50 flex items-center justify-between rounded-[28px] px-2 py-2 sm:px-4 sm:py-3 md:left-6 md:right-6 md:px-5"
     >
-      <div className="flex min-w-0 items-center gap-4">
-        <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-2xl border border-cosmos-gold/20 bg-cosmos-gold/10 shadow-[0_0_34px_rgba(212,168,83,0.12)]">
+      <div className="flex min-w-0 items-center gap-2 sm:gap-4">
+        <div className="relative h-8 w-8 shrink-0 overflow-hidden rounded-2xl border border-cosmos-gold/20 bg-cosmos-gold/10 shadow-[0_0_34px_rgba(212,168,83,0.12)] sm:h-11 sm:w-11">
           <motion.div
             className="absolute inset-1 rounded-full border border-cosmos-gold/35"
             animate={{ rotate: 360 }}
@@ -81,7 +81,7 @@ export function NavBar({ onSearchOpen, onThemeToggle, theme, stats }: NavBarProp
           aria-label={theme === "night" ? "切换到白天主题" : "切换到黑夜主题"}
           className="group flex items-center gap-2 rounded-full border border-cosmos-border/40 bg-cosmos-surface/70 px-3 py-2 text-cosmos-text-dim transition-all duration-300 hover:border-cosmos-gold/30 hover:bg-cosmos-gold/10 hover:text-cosmos-text"
         >
-          <span className="relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-cosmos-border/40 bg-cosmos-card/70 shadow-[0_0_24px_rgba(212,168,83,0.12)]">
+          <span className="relative flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-cosmos-border/40 bg-cosmos-card/70 shadow-[0_0_24px_rgba(212,168,83,0.12)] sm:h-9 sm:w-9">
             <motion.span
               className="absolute inset-1 rounded-full bg-gradient-to-br from-cosmos-gold/20 via-cosmos-accent/35 to-transparent"
               animate={{ rotate: theme === "day" ? 360 : -360, scale: theme === "day" ? 1 : 0.92 }}
