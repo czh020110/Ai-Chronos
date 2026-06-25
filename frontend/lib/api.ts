@@ -31,6 +31,18 @@ export interface EventListParams {
   offset?: number;
 }
 
+export interface SearchEvent extends AIEvent {
+  score: number;
+}
+
+export interface SearchResult {
+  events: SearchEvent[];
+  summary: string | null;
+  total_candidates: number;
+}
+
+export type SearchMode = "keyword" | "semantic" | "hybrid";
+
 export async function fetchPublishedEvents(): Promise<AIEvent[]> {
   const res = await fetch(`${API_BASE}/api/events?status=published&limit=500`);
   if (!res.ok) throw new Error(`API error: ${res.status}`);
@@ -62,6 +74,20 @@ export async function fetchEvents(params: EventListParams = {}): Promise<AIEvent
 
 export async function fetchStats(): Promise<Stats> {
   const res = await fetch(`${API_BASE}/api/stats`);
+  if (!res.ok) throw new Error(`API error: ${res.status}`);
+  return res.json();
+}
+
+export async function fetchSearch(
+  query: string,
+  limit: number = 20,
+  mode: SearchMode = "hybrid",
+): Promise<SearchResult> {
+  const res = await fetch(`${API_BASE}/api/search`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ query, limit, mode }),
+  });
   if (!res.ok) throw new Error(`API error: ${res.status}`);
   return res.json();
 }

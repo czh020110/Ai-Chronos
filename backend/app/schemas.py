@@ -62,3 +62,22 @@ class StatsResponse(BaseModel):
     by_status: dict[str, int]
     by_category: dict[str, int]
     year_range: list[str]  # e.g. ["2017", "2025"]
+
+
+class SearchRequest(BaseModel):
+    """Request body for RAG hybrid search."""
+    query: str
+    limit: int = Field(default=20, ge=1, le=100)
+    mode: Literal["hybrid", "semantic", "keyword"] = "hybrid"
+
+
+class SearchEvent(EventResponse):
+    """Event with search relevance score."""
+    score: float = 0.0
+
+
+class SearchResult(BaseModel):
+    """Response from RAG hybrid search."""
+    events: list[SearchEvent]
+    summary: str | None = None
+    total_candidates: int = 0
